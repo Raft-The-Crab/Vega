@@ -16,12 +16,14 @@ image.workspace = true
 walkdir.workspace = true
 zip = { version = "2.1", default-features = false, features = ["deflate"] }
 vega-core = { path = "../vega-core" }
+chrono = "0.4"
 
 # PSD parsing (will add a library when selected)
 # psd = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 criterion = "0.5"
+tempfile = "3.10"
 
 # Benchmarks will be added when parsing is implemented
 # [[bench]]

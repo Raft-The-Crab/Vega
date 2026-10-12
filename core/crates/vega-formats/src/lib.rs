@@ -1,6 +1,9 @@
-//! VEGA Formats - File format parsers and writers.
+//! VEGA file formats library
 //!
-//! This crate provides file format support including native `.vega`,
-//! PSD/PSB, PNG, JPEG, WebP, TIFF, and BMP.
+//! Provides file format implementations for the VEGA image editor.
 
-// Placeholder implementation - will be implemented in later phases
+pub mod autosave;
+pub mod vega;
+
+pub use autosave::{AutosaveConfig, AutosaveError, AutosaveManager, CrashRecoveryManager};
+pub use vega::{FormatError, Manifest, VegaProject, FORMAT_VERSION, Result};
