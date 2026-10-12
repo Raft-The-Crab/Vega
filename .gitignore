@@ -2,7 +2,6 @@
 bin/
 obj/
 out/
-build/
 dist/
 target/
 *.exe
@@ -13,6 +12,31 @@ target/
 *.lib
 *.o
 *.obj
+
+# Application build outputs
+application/desktop/bin/
+application/desktop/obj/
+application/android/app/build/
+application/android/.gradle/
+application/android/local.properties
+
+# Core build outputs
+core/target/
+core/Cargo.lock
+
+# Backend build outputs
+backend/worker/node_modules/
+backend/worker/.wrangler/
+backend/worker/dist/
+backend/worker/.dev.vars
+
+# Infrastructure build outputs
+infrastructure/build/**/*.msix
+infrastructure/build/**/*.exe
+infrastructure/build/**/*.dmg
+infrastructure/build/**/*.pkg
+infrastructure/build/**/*.apk
+infrastructure/build/**/*.aab
 
 # .NET
 *.user
@@ -25,7 +49,6 @@ artifacts/
 *.DotSettings.user
 
 # Rust
-Cargo.lock
 **/*.rs.bk
 .direnv/
 
@@ -86,6 +109,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+*.dev.vars
 
 # Documentation
 docs/_build/
@@ -95,3 +119,7 @@ site/
 *.tmp
 *.temp
 *.cache
+
+# Shared/Testing
+shared/fixtures/**/*.tmp
+testing/**/*.tmp
