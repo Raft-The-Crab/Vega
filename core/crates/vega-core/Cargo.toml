@@ -1,0 +1,27 @@
+[package]
+name = "vega-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+glam.workspace = true
+nalgebra.workspace = true
+rgb.workspace = true
+bytemuck.workspace = true
+
+[dev-dependencies]
+criterion = "0.5"
+
+# Benchmarks will be added when rendering is implemented
+# [[bench]]
+# name = "rendering"
+# harness = false

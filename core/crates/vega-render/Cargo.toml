@@ -1,0 +1,36 @@
+[package]
+name = "vega-render"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+glam.workspace = true
+nalgebra.workspace = true
+rgb.workspace = true
+bytemuck.workspace = true
+image.workspace = true
+vega-core = { path = "../vega-core" }
+
+# Optional GPU support (wgpu)
+wgpu = { version = "0.19", optional = true }
+
+[features]
+default = ["cpu"]
+cpu = []
+gpu = ["wgpu"]
+
+[dev-dependencies]
+criterion = "0.5"
+
+# Benchmarks will be added when compositing is implemented
+# [[bench]]
+# name = "compositing"
+# harness = false

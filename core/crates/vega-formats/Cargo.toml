@@ -1,0 +1,29 @@
+[package]
+name = "vega-formats"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+image.workspace = true
+walkdir.workspace = true
+zip = { version = "2.1", default-features = false, features = ["deflate"] }
+vega-core = { path = "../vega-core" }
+
+# PSD parsing (will add a library when selected)
+# psd = { version = "0.3", default-features = false }
+
+[dev-dependencies]
+criterion = "0.5"
+
+# Benchmarks will be added when parsing is implemented
+# [[bench]]
+# name = "parsing"
+# harness = false

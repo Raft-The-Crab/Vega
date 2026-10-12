@@ -1,0 +1,51 @@
+[workspace]
+members = [
+    "crates/vega-core",
+    "crates/vega-ffi",
+    "crates/vega-render",
+    "crates/vega-formats",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["Raft-The-Crab"]
+license = "Proprietary"
+
+[workspace.dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "tiff", "bmp"] }
+rgb = "0.8"
+bytemuck = "1.14"
+
+# Math and geometry
+glam = { version = "0.25", features = ["serde"] }
+nalgebra = "0.32"
+
+# Async runtime (optional, add when needed)
+# tokio = { version = "1.35", features = ["full"] }
+
+# File I/O
+walkdir = "2.5"
+
+# Documentation
+cargo-docs = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 0

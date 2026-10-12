@@ -1,0 +1,24 @@
+[package]
+name = "vega-desktop"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+egui = "0.28"
+eframe = { version = "0.28", default-features = false, features = [
+    "default_fonts",
+    "glow",
+    "persistence",
+] }
+egui_dock = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+rfd = "0.14"
+image = "0.25"
+chrono = "0.4"
+log = "0.4"
+env_logger = "0.11"
+
+# Core dependencies (will be path dependencies when workspace is set up)
+vega-core = { path = "../../core/crates/vega-core" }
+vega-ffi = { path = "../../core/crates/vega-ffi" }
+vega-render = { path = "../../core/crates/vega-render" }
