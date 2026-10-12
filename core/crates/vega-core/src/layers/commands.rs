@@ -3,7 +3,7 @@
 //! Provides undoable operations for creating, deleting, moving, and transforming layers.
 
 use crate::commands::base::{Command, CommandContext};
-use crate::document::model::document::Document;
+use crate::document::model::Document;
 use crate::document::nodes::Node;
 use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::nodes::NodeType;

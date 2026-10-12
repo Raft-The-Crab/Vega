@@ -3,7 +3,7 @@
 //! Provides export of documents to PNG, JPEG, and WebP formats.
 
 use crate::color::types::Rgba8;
-use crate::document::model::document::Document;
+use crate::document::model::Document;
 use crate::geometry::Size;
 use crate::errors::DocumentError;
 use crate::render::ViewportRenderer;

@@ -4,7 +4,7 @@
 
 use crate::color::ColorSpace;
 use crate::commands::base::{CommandExecutor, CommandContext};
-use crate::document::model::document::Document;
+use crate::document::model::Document;
 use crate::document::nodes::NodeType;
 use crate::geometry::{Point, Rect, Size};
 use crate::layers::CreateLayerCommand;

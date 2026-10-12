@@ -4,7 +4,7 @@
 
 use crate::color::types::Rgba8;
 use crate::document::ids::structure::{NodeId, CommandId};
-use crate::document::model::document::Document;
+use crate::document::model::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;

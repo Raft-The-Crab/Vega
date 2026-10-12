@@ -3,7 +3,7 @@
 //! Provides rendering of document regions to buffers for display.
 
 use crate::color::types::Rgba8;
-use crate::document::model::document::Document;
+use crate::document::model::Document;
 use crate::document::nodes::Node;
 use crate::document::ids::structure::NodeId;
 use crate::errors::DocumentError;

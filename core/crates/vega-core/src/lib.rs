@@ -79,11 +79,11 @@ pub use commands::{Command, CommandExecutor, Transaction};
 pub use commands::base::CommandContext;
 pub use config::{CacheConfig, ConfigError, MemoryConfig, RenderConfig, TileConfig, VegaConfig};
 pub use document::{
-    AdjustmentType, BlendMode, CommandId, DocumentId, DocumentMetadata, LayerId, MaskData,
+    AdjustmentType, BlendMode, CommandId, DocumentId, LayerId, MaskData,
     Node, NodeId, NodeProperties, NodeType, Revision, RevisionCounter, RevisionGuard,
     RevisionMismatchError, ShapeType, Transform,
 };
-pub use document::model::document::Document;
+pub use document::model::{Document, DocumentMetadata};
 pub use errors::{VegaError, Result};
 pub use brush::{paint_brush, paint_eraser, BrushCommand, BrushParams, EraserCommand, EraserParams};
 pub use export::{export_document, export_to_jpeg, export_to_png, export_to_webp, export_with_params, ExportFormat, ExportParams, ExportQuality};

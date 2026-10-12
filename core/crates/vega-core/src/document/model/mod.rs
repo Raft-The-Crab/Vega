@@ -1,6 +1,6 @@
 //! The document model.
 
-mod document;
+pub mod document;
 mod tests;
 
 pub use document::{Document, DocumentMetadata};
