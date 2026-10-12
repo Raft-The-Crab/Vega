@@ -1,6 +1,8 @@
 //! Document model and structure.
 
-pub mod ids;
+pub mod ids {
+    pub mod structure;
+}
 pub mod model;
 pub mod nodes;
 pub mod revision;

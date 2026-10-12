@@ -181,7 +181,9 @@ fn blend_color_burn(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_hard_light(dest: RGBA8, src: RGBA8) -> blend_overlay(dest, src)
+fn blend_hard_light(dest: RGBA8, src: RGBA8) -> RGBA8 {
+    blend_overlay(dest, src)
+}
 
 fn blend_soft_light(dest: RGBA8, src: RGBA8) -> RGBA8 {
     // Simplified soft light implementation

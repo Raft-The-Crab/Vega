@@ -482,6 +482,7 @@ impl CropLayerCommand {
             layer_id,
             params,
             original_bounds: None,
+            original_tile_data: None,
         }
     }
 
@@ -615,6 +616,7 @@ impl ResizeLayerCommand {
             layer_id,
             params,
             original_size: None,
+            original_tile_data: None,
         }
     }
 
@@ -708,6 +710,296 @@ impl ResizeLayerCommand {
     /// Restore tile data from saved state.
     fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<RGBA8>)]) -> Result<(), DocumentError> {
         CropLayerCommand::restore_tile_data(tile_storage, data)
+    }
+}
+
+/// Command for rotating a layer 90 degrees clockwise.
+pub struct RotateLayerCwCommand {
+    layer_id: NodeId,
+    original_size: Option<Size>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+}
+
+impl RotateLayerCwCommand {
+    /// Creates a new rotate clockwise command.
+    pub fn new(layer_id: NodeId) -> Self {
+        Self {
+            layer_id,
+            original_size: None,
+            original_tile_data: None,
+        }
+    }
+
+    /// Returns the layer ID.
+    pub fn layer_id(&self) -> NodeId {
+        self.layer_id
+    }
+}
+
+impl Command for RotateLayerCwCommand {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        let node = document.get_node(self.layer_id)
+            .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+        if let Node::Raster { bounds, .. } = node {
+            self.original_size = Some(Size::new(bounds.width, bounds.height));
+            
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                self.original_tile_data = Some(CropLayerCommand::save_tile_data(tile_storage, *bounds));
+                rotate_layer_cw(document, self.layer_id, tile_storage)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(original_size) = self.original_size {
+            let node = document.get_node_mut(self.layer_id)
+                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+            if let Node::Raster { bounds, .. } = node {
+                bounds.width = original_size.width;
+                bounds.height = original_size.height;
+                
+                if let Some(ref mut tile_storage) = context.tile_storage {
+                    if let Some(ref original_data) = self.original_tile_data {
+                        CropLayerCommand::restore_tile_data(tile_storage, original_data)?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            rotate_layer_cw(document, self.layer_id, tile_storage)?;
+        }
+        Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Rotate layer 90° clockwise: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
+    }
+}
+
+/// Command for rotating a layer 90 degrees counter-clockwise.
+pub struct RotateLayerCcwCommand {
+    layer_id: NodeId,
+    original_size: Option<Size>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+}
+
+impl RotateLayerCcwCommand {
+    /// Creates a new rotate counter-clockwise command.
+    pub fn new(layer_id: NodeId) -> Self {
+        Self {
+            layer_id,
+            original_size: None,
+            original_tile_data: None,
+        }
+    }
+
+    /// Returns the layer ID.
+    pub fn layer_id(&self) -> NodeId {
+        self.layer_id
+    }
+}
+
+impl Command for RotateLayerCcwCommand {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        let node = document.get_node(self.layer_id)
+            .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+        if let Node::Raster { bounds, .. } = node {
+            self.original_size = Some(Size::new(bounds.width, bounds.height));
+            
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                self.original_tile_data = Some(CropLayerCommand::save_tile_data(tile_storage, *bounds));
+                rotate_layer_ccw(document, self.layer_id, tile_storage)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(original_size) = self.original_size {
+            let node = document.get_node_mut(self.layer_id)
+                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+            if let Node::Raster { bounds, .. } = node {
+                bounds.width = original_size.width;
+                bounds.height = original_size.height;
+                
+                if let Some(ref mut tile_storage) = context.tile_storage {
+                    if let Some(ref original_data) = self.original_tile_data {
+                        CropLayerCommand::restore_tile_data(tile_storage, original_data)?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            rotate_layer_ccw(document, self.layer_id, tile_storage)?;
+        }
+        Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Rotate layer 90° counter-clockwise: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
+    }
+}
+
+/// Command for flipping a layer horizontally.
+pub struct FlipLayerHorizontalCommand {
+    layer_id: NodeId,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+}
+
+impl FlipLayerHorizontalCommand {
+    /// Creates a new flip horizontal command.
+    pub fn new(layer_id: NodeId) -> Self {
+        Self {
+            layer_id,
+            original_tile_data: None,
+        }
+    }
+
+    /// Returns the layer ID.
+    pub fn layer_id(&self) -> NodeId {
+        self.layer_id
+    }
+}
+
+impl Command for FlipLayerHorizontalCommand {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        let node = document.get_node(self.layer_id)
+            .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+        if let Node::Raster { bounds, .. } = node {
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                self.original_tile_data = Some(CropLayerCommand::save_tile_data(tile_storage, *bounds));
+                flip_layer_horizontal(document, self.layer_id, tile_storage)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            if let Some(ref original_data) = self.original_tile_data {
+                CropLayerCommand::restore_tile_data(tile_storage, original_data)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            flip_layer_horizontal(document, self.layer_id, tile_storage)?;
+        }
+        Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Flip layer horizontally: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
+    }
+}
+
+/// Command for flipping a layer vertically.
+pub struct FlipLayerVerticalCommand {
+    layer_id: NodeId,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+}
+
+impl FlipLayerVerticalCommand {
+    /// Creates a new flip vertical command.
+    pub fn new(layer_id: NodeId) -> Self {
+        Self {
+            layer_id,
+            original_tile_data: None,
+        }
+    }
+
+    /// Returns the layer ID.
+    pub fn layer_id(&self) -> NodeId {
+        self.layer_id
+    }
+}
+
+impl Command for FlipLayerVerticalCommand {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        let node = document.get_node(self.layer_id)
+            .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+        if let Node::Raster { bounds, .. } = node {
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                self.original_tile_data = Some(CropLayerCommand::save_tile_data(tile_storage, *bounds));
+                flip_layer_vertical(document, self.layer_id, tile_storage)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            if let Some(ref original_data) = self.original_tile_data {
+                CropLayerCommand::restore_tile_data(tile_storage, original_data)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            flip_layer_vertical(document, self.layer_id, tile_storage)?;
+        }
+        Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Flip layer vertically: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
     }
 }
 

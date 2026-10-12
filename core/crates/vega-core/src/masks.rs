@@ -115,9 +115,9 @@ impl LayerMask {
     }
 }
 
-//! Layer masks
-//!
-//! Provides layer mask functionality for controlling layer visibility on a per-pixel basis.
+/// Layer masks
+///
+/// Provides layer mask functionality for controlling layer visibility on a per-pixel basis.
 
 use crate::color::types::rgba::RGBA8;
 use crate::document::ids::structure::NodeId;

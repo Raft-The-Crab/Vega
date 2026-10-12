@@ -52,7 +52,7 @@
 //! - [`render`]: CPU rendering pipeline
 //! - [`tiles`]: Tile-based pixel storage
 
-pub mod async;
+pub mod r#async;
 pub mod color;
 pub mod commands;
 pub mod config;
@@ -88,7 +88,7 @@ pub use export::{export_document, export_to_jpeg, export_to_png, export_to_webp,
 pub use geometry::{Point, Rect, Size};
 pub use masks::{add_layer_mask, apply_selection_as_mask, paint_on_mask, remove_layer_mask, AddLayerMaskCommand, ApplySelectionAsMaskCommand, LayerMask, LayerMaskStorage, RemoveLayerMaskCommand};
 pub use selections::{create_elliptical_selection, create_lasso_selection, create_magic_wand_selection, create_rectangular_selection, color_distance, EllipticalSelectionParams, LassoSelectionParams, MagicWandParams, RectangularSelectionCommand, RectangularSelectionParams, SelectionMask, SelectionMode, SelectionShape, SelectionStorage};
-pub use image_ops::{calculate_aspect_ratio_size, crop_layer, flip_layer_horizontal, flip_layer_vertical, resize_layer, rotate_layer_ccw, rotate_layer_cw, CropLayerCommand, CropParams, ResizeLayerCommand, ResizeParams, ResamplingMethod};
+pub use image_ops::{calculate_aspect_ratio_size, crop_layer, flip_layer_horizontal, flip_layer_vertical, resize_layer, rotate_layer_ccw, rotate_layer_cw, CropLayerCommand, CropParams, ResizeLayerCommand, ResizeParams, ResamplingMethod, RotateLayerCwCommand, RotateLayerCcwCommand, FlipLayerHorizontalCommand, FlipLayerVerticalCommand};
 pub use layers::{
     CreateLayerCommand, DeleteLayerCommand, DuplicateLayerCommand, MergeDownCommand,
     MoveLayerCommand, ReorderLayerCommand, TransformLayerCommand,
