@@ -10,6 +10,7 @@ use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
 use crate::commands::base::{Command, CommandContext};
 use crate::tiles::{TileStorage, TileCoords};
+use std::collections::HashMap;
 
 /// Selection operation mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -419,6 +420,58 @@ fn color_distance(c1: RGBA8, c2: RGBA8) -> f32 {
     (dr + dg + db + da) / 4.0
 }
 
+/// Storage for selection masks.
+#[derive(Debug, Clone)]
+pub struct SelectionStorage {
+    /// Maps layer IDs to their selection masks.
+    masks: HashMap<NodeId, SelectionMask>,
+}
+
+impl SelectionStorage {
+    /// Creates a new selection storage.
+    pub fn new() -> Self {
+        Self {
+            masks: HashMap::new(),
+        }
+    }
+
+    /// Gets the selection mask for a layer.
+    pub fn get(&self, layer_id: NodeId) -> Option<&SelectionMask> {
+        self.masks.get(&layer_id)
+    }
+
+    /// Gets a mutable reference to the selection mask for a layer.
+    pub fn get_mut(&mut self, layer_id: NodeId) -> Option<&mut SelectionMask> {
+        self.masks.get_mut(&layer_id)
+    }
+
+    /// Sets the selection mask for a layer.
+    pub fn set(&mut self, layer_id: NodeId, mask: SelectionMask) {
+        self.masks.insert(layer_id, mask);
+    }
+
+    /// Removes the selection mask for a layer.
+    pub fn remove(&mut self, layer_id: NodeId) -> Option<SelectionMask> {
+        self.masks.remove(&layer_id)
+    }
+
+    /// Checks if a layer has a selection mask.
+    pub fn has(&self, layer_id: NodeId) -> bool {
+        self.masks.contains_key(&layer_id)
+    }
+
+    /// Clears all selection masks.
+    pub fn clear(&mut self) {
+        self.masks.clear();
+    }
+}
+
+impl Default for SelectionStorage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Command for rectangular selection.
 pub struct RectangularSelectionCommand {
     layer_id: NodeId,
@@ -443,22 +496,46 @@ impl RectangularSelectionCommand {
 }
 
 impl Command for RectangularSelectionCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Full implementation requires external selection storage
-        // The create_rectangular_selection function handles mask creation
-        // This command serves as the undo/redo wrapper
-        // For production use, integrate with selection storage and save previous state
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        let node = document.get_node(self.layer_id)
+            .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+        let bounds = match node {
+            Node::Raster { bounds, .. } => *bounds,
+            _ => return Err(DocumentError::InvalidLayerOperation(
+                "Selection only supported on raster layers".to_string(),
+            )),
+        };
+
+        // Save previous selection mask if storage is available
+        if let Some(ref mut selection_storage) = context.selection_storage {
+            self.previous_mask = selection_storage.get(self.layer_id).cloned();
+        }
+
+        // Create new selection mask
+        let new_mask = create_rectangular_selection(bounds, self.params.clone())?;
+
+        // Store the new mask if storage is available
+        if let Some(ref mut selection_storage) = context.selection_storage {
+            selection_storage.set(self.layer_id, new_mask);
+        }
+
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Restore previous selection mask
+    fn undo(&mut self, _document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut selection_storage) = context.selection_storage {
+            if let Some(previous_mask) = self.previous_mask.take() {
+                selection_storage.set(self.layer_id, previous_mask);
+            } else {
+                selection_storage.remove(self.layer_id);
+            }
+        }
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Re-apply selection using saved params
-        Ok(())
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, context)
     }
 
     fn description(&self) -> String {

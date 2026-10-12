@@ -9,18 +9,21 @@ use crate::document::Document;
 use crate::errors::{DocumentError, Result};
 use crate::tiles::TileStorage;
 use crate::masks::LayerMaskStorage;
+use crate::selections::SelectionStorage;
 use std::fmt;
 
 /// Context for command execution.
 ///
 /// Provides access to external resources needed for command execution,
-/// such as tile storage and layer mask storage.
+/// such as tile storage, layer mask storage, and selection storage.
 #[derive(Debug)]
 pub struct CommandContext {
     /// Tile storage for pixel operations.
     pub tile_storage: Option<TileStorage>,
     /// Layer mask storage for mask operations.
     pub mask_storage: Option<LayerMaskStorage>,
+    /// Selection storage for selection operations.
+    pub selection_storage: Option<SelectionStorage>,
 }
 
 impl CommandContext {
@@ -29,6 +32,7 @@ impl CommandContext {
         Self {
             tile_storage: None,
             mask_storage: None,
+            selection_storage: None,
         }
     }
 
@@ -37,6 +41,7 @@ impl CommandContext {
         Self {
             tile_storage: Some(tile_storage),
             mask_storage: None,
+            selection_storage: None,
         }
     }
 
@@ -45,14 +50,38 @@ impl CommandContext {
         Self {
             tile_storage: None,
             mask_storage: Some(mask_storage),
+            selection_storage: None,
         }
     }
 
-    /// Creates a command context with both storages.
-    pub fn with_storages(tile_storage: TileStorage, mask_storage: LayerMaskStorage) -> Self {
+    /// Creates a command context with selection storage.
+    pub fn with_selection_storage(selection_storage: SelectionStorage) -> Self {
+        Self {
+            tile_storage: None,
+            mask_storage: None,
+            selection_storage: Some(selection_storage),
+        }
+    }
+
+    /// Creates a command context with tile and mask storage.
+    pub fn with_tile_and_mask_storage(tile_storage: TileStorage, mask_storage: LayerMaskStorage) -> Self {
         Self {
             tile_storage: Some(tile_storage),
             mask_storage: Some(mask_storage),
+            selection_storage: None,
+        }
+    }
+
+    /// Creates a command context with all storages.
+    pub fn with_all_storages(
+        tile_storage: TileStorage,
+        mask_storage: LayerMaskStorage,
+        selection_storage: SelectionStorage,
+    ) -> Self {
+        Self {
+            tile_storage: Some(tile_storage),
+            mask_storage: Some(mask_storage),
+            selection_storage: Some(selection_storage),
         }
     }
 }
