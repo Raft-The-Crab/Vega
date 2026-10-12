@@ -2,7 +2,7 @@
 //!
 //! Provides caching mechanisms to improve rendering performance.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::ids::structure::NodeId;
 use crate::document::revision::Revision;
 use std::collections::HashMap;

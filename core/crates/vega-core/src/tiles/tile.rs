@@ -3,7 +3,7 @@
 //! Tiles are fixed-size blocks of pixel data that form the basic unit
 //! of image storage in VEGA.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::limits;
 use std::fmt;
 

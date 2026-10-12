@@ -2,7 +2,7 @@
 //!
 //! Provides rendering for non-destructive adjustment layers.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::nodes::AdjustmentType;
 
 /// Applies an adjustment to a pixel.

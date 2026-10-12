@@ -3,7 +3,7 @@
 //! Provides HSL (Hue, Saturation, Luminosity) color space operations
 //! for advanced blend modes.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 
 /// HSL color representation.
 #[derive(Debug, Clone, Copy)]

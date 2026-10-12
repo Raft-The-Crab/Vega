@@ -2,7 +2,7 @@
 //!
 //! Provides concurrent rendering capabilities using rayon for parallel tile processing.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::model::document::Document;
 use crate::document::ids::structure::NodeId;
 use crate::errors::DocumentError;

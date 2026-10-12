@@ -4,7 +4,7 @@
 //! image data. It handles the mapping between pixel coordinates and tiles,
 //! manages tile lifetimes, and provides access patterns for rendering.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::errors::DocumentError;
 use crate::limits;
 use crate::tiles::tile::{Tile, TileCoords, TileIndex};

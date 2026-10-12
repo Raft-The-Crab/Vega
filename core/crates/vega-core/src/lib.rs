@@ -100,7 +100,7 @@ pub use metrics::{MetricsTracker, RenderMetrics, RenderTimer};
 pub use recovery::{FallbackProvider, MemoryPressureMonitor, RecoveryContext, RecoveryStrategy, safe_get, safe_get_opt, try_with_fallback, try_with_recovery};
 pub use render::{blend_pixels, BlendOp, CacheEntry, Compositor, Hsl, RenderCache, ViewportRenderer,
             apply_adjustment, blend_color, blend_hue, blend_luminosity, blend_saturation, luminance,
-            inverse_transform_point, is_identity_transform, render_tiles_parallel, render_tiles_sequential,
+            inverse_transform_point, is_identity_transform, render_tiles_sequential,
             transform_point, transform_rect, transformed_bounds};
 pub use security::{BoundsChecker, RateLimiter, TimeoutHandler, is_safe_path, sanitize_string, truncate_string, validate_size};
 pub use tiles::{EvictionPolicy, MemoryStats, Tile, TileCoords, TileHandle, TileIndex, TileMemoryManager, TileStorage};

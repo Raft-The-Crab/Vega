@@ -2,7 +2,7 @@
 //!
 //! Provides memory tracking and eviction policies for tile storage.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::limits;
 use std::collections::HashMap;
 
