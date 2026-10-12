@@ -3,7 +3,7 @@
 //! Provides selection tools for defining regions of interest in images.
 
 use crate::color::types::rgba::RGBA8;
-use crate::document::ids::structure::NodeId;
+use crate::document::ids::{structure::NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
@@ -459,6 +459,14 @@ impl Command for RectangularSelectionCommand {
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-apply selection using saved params
         Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Rectangular selection at {:?}", self.params.rect)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 

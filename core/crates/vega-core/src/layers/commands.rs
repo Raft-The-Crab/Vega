@@ -115,6 +115,14 @@ impl Command for DeleteLayerCommand {
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
     }
+
+    fn description(&self) -> String {
+        format!("Delete layer: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
 }
 
 /// Command to move a layer to a new parent.
@@ -161,6 +169,14 @@ impl Command for MoveLayerCommand {
 
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
+    }
+
+    fn description(&self) -> String {
+        format!("Move layer: {} to parent {:?}", self.layer_id, self.new_parent_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 
@@ -215,6 +231,14 @@ impl Command for ReorderLayerCommand {
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
     }
+
+    fn description(&self) -> String {
+        format!("Reorder layer: {} to index {}", self.layer_id, self.new_index)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
 }
 
 /// Command to transform a layer.
@@ -259,6 +283,14 @@ impl Command for TransformLayerCommand {
 
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
+    }
+
+    fn description(&self) -> String {
+        format!("Transform layer: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 
@@ -317,6 +349,14 @@ impl Command for DuplicateLayerCommand {
 
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
+    }
+
+    fn description(&self) -> String {
+        format!("Duplicate layer: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 
@@ -404,6 +444,14 @@ impl Command for MergeDownCommand {
 
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
+    }
+
+    fn description(&self) -> String {
+        format!("Merge down layer: {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 
