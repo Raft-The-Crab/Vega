@@ -57,3 +57,13 @@ pub enum DocumentError {
     #[error("rendering error: {0}")]
     RenderError(String),
 }
+
+impl From<crate::errors::VegaError> for DocumentError {
+    fn from(err: crate::errors::VegaError) -> Self {
+        match err {
+            crate::errors::VegaError::Document(e) => e,
+            crate::errors::VegaError::ResourceLimit(s) => DocumentError::ResourceLimit(s),
+            _ => DocumentError::InvalidState(err.to_string()),
+        }
+    }
+}

@@ -354,6 +354,7 @@ fn blend_color_with_opacity(
 }
 
 /// Command for brush painting.
+#[derive(Debug)]
 pub struct BrushCommand {
     layer_id: NodeId,
     params: BrushParams,
@@ -449,6 +450,7 @@ impl Command for BrushCommand {
 }
 
 /// Command for eraser painting.
+#[derive(Debug)]
 pub struct EraserCommand {
     layer_id: NodeId,
     params: EraserParams,

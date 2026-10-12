@@ -411,7 +411,7 @@ pub fn create_magic_wand_selection(
 }
 
 /// Calculates color distance for magic wand.
-fn color_distance(c1: Rgba8, c2: Rgba8) -> f32 {
+pub fn color_distance(c1: Rgba8, c2: Rgba8) -> f32 {
     let dr = (c1.r as f32 - c2.r as f32).abs();
     let dg = (c1.g as f32 - c2.g as f32).abs();
     let db = (c1.b as f32 - c2.b as f32).abs();
@@ -473,6 +473,7 @@ impl Default for SelectionStorage {
 }
 
 /// Command for rectangular selection.
+#[derive(Debug)]
 pub struct RectangularSelectionCommand {
     layer_id: NodeId,
     params: RectangularSelectionParams,

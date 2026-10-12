@@ -276,6 +276,7 @@ pub fn paint_on_mask(
 }
 
 /// Command for adding a layer mask.
+#[derive(Debug)]
 pub struct AddLayerMaskCommand {
     layer_id: NodeId,
     removed_mask: Option<LayerMask>,
@@ -328,6 +329,7 @@ impl Command for AddLayerMaskCommand {
 }
 
 /// Command for removing a layer mask.
+#[derive(Debug)]
 pub struct RemoveLayerMaskCommand {
     layer_id: NodeId,
     removed_mask: Option<LayerMask>,
@@ -382,6 +384,7 @@ impl Command for RemoveLayerMaskCommand {
 }
 
 /// Command for applying selection as layer mask.
+#[derive(Debug)]
 pub struct ApplySelectionAsMaskCommand {
     layer_id: NodeId,
     selection: SelectionMask,

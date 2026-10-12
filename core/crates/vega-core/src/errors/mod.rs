@@ -16,6 +16,7 @@ pub use runtime::RuntimeError;
 pub use serialization::SerializationError;
 pub use validation::ValidationError;
 
+use crate::limits::LimitError;
 use thiserror::Error;
 
 /// The primary error type for VEGA core operations.
@@ -40,6 +41,16 @@ pub enum VegaError {
     /// Validation errors for invalid inputs or states.
     #[error("validation error: {0}")]
     Validation(#[from] ValidationError),
+
+    /// Resource limit errors.
+    #[error("resource limit exceeded: {0}")]
+    ResourceLimit(String),
+}
+
+impl From<LimitError> for VegaError {
+    fn from(err: LimitError) -> Self {
+        VegaError::ResourceLimit(err.to_string())
+    }
 }
 
 /// Result type alias for VEGA operations.

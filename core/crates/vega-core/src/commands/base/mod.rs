@@ -6,7 +6,7 @@
 
 use crate::document::ids::structure::CommandId;
 use crate::document::Document;
-use crate::errors::{DocumentError, Result};
+use crate::errors::DocumentError;
 use crate::tiles::TileStorage;
 use crate::masks::LayerMaskStorage;
 use crate::selections::SelectionStorage;
@@ -134,19 +134,19 @@ pub trait Command: fmt::Debug + Send + Sync {
     ///
     /// This method should apply the command's changes to the document and
     /// return an error if the operation cannot be completed.
-    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()>;
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError>;
 
     /// Undo the command, reverting the document to its previous state.
     ///
     /// This method should restore the document to the state it was in before
     /// execute() was called.
-    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()>;
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError>;
 
     /// Redo the command, reapplying it after an undo.
     ///
     /// The default implementation simply calls execute(), but commands can
     /// override this for optimization.
-    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()> {
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, context)
     }
 
@@ -204,14 +204,14 @@ impl Transaction {
 }
 
 impl Command for Transaction {
-    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()> {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         for command in &mut self.commands {
             command.execute(document, context)?;
         }
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()> {
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         // Undo in reverse order
         for command in self.commands.iter_mut().rev() {
             command.undo(document, context)?;
@@ -219,7 +219,7 @@ impl Command for Transaction {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()> {
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         for command in &mut self.commands {
             command.redo(document, context)?;
         }
@@ -288,7 +288,7 @@ impl CommandExecutor {
     }
 
     /// Execute a command and add it to history.
-    pub fn execute(&mut self, document: &mut Document, mut command: Box<dyn Command>, context: &mut CommandContext) -> Result<()> {
+    pub fn execute(&mut self, document: &mut Document, mut command: Box<dyn Command>, context: &mut CommandContext) -> Result<(), DocumentError> {
         // Execute the command
         command.execute(document, context)?;
 
@@ -314,9 +314,9 @@ impl CommandExecutor {
     }
 
     /// Undo the last command.
-    pub fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()> {
+    pub fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         if self.history_position == 0 {
-            return Err(DocumentError::InvalidState("Nothing to undo".to_string()).into());
+            return Err(DocumentError::InvalidState("Nothing to undo".to_string()));
         }
 
         self.history_position -= 1;
@@ -327,9 +327,9 @@ impl CommandExecutor {
     }
 
     /// Redo the next command.
-    pub fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<()> {
+    pub fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         if self.history_position >= self.history.len() {
-            return Err(DocumentError::InvalidState("Nothing to redo".to_string()).into());
+            return Err(DocumentError::InvalidState("Nothing to redo".to_string()));
         }
 
         let command = &mut self.history[self.history_position];

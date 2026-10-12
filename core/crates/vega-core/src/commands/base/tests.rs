@@ -32,24 +32,21 @@ mod tests {
     }
 
     impl Command for AddNodeCommand {
-        fn execute(&mut self, document: &mut Document) -> Result<()> {
+        fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
             if let Some(node) = self.node.take() {
                 document.add_node(node)?;
             }
             Ok(())
         }
 
-        fn undo(&mut self, document: &mut Document) -> Result<()> {
+        fn undo(&mut self, _document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
             // This is a simplified undo - in reality we'd need to store the node ID
             Ok(())
         }
 
-        fn redo(&mut self, document: &mut Document) -> Result<()> {
+        fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
             // Re-execute the add
-            if let Some(node) = self.node.take() {
-                document.add_node(node)?;
-            }
-            Ok(())
+            self.execute(document, context)
         }
 
         fn description(&self) -> String {
@@ -79,6 +76,7 @@ mod tests {
     fn test_command_executor_execute() {
         let mut executor = CommandExecutor::new(10);
         let mut doc = Document::new("test".to_string(), Size::new(100, 100), ColorSpace::Srgb);
+        let mut context = CommandContext::default();
 
         let node_id = NodeId::generate();
         let node = Node::Raster {
@@ -88,7 +86,7 @@ mod tests {
         };
 
         let command = Box::new(AddNodeCommand::new(node));
-        let result = executor.execute(&mut doc, command);
+        let result = executor.execute(&mut doc, command, &mut context);
 
         assert!(result.is_ok());
         assert_eq!(executor.history_len(), 1);
@@ -100,6 +98,7 @@ mod tests {
     fn test_command_executor_undo() {
         let mut executor = CommandExecutor::new(10);
         let mut doc = Document::new("test".to_string(), Size::new(100, 100), ColorSpace::Srgb);
+        let mut context = CommandContext::default();
 
         let node_id = NodeId::generate();
         let node = Node::Raster {
@@ -109,9 +108,9 @@ mod tests {
         };
 
         let command = Box::new(AddNodeCommand::new(node));
-        executor.execute(&mut doc, command).unwrap();
+        executor.execute(&mut doc, command, &mut context).unwrap();
 
-        let result = executor.undo(&mut doc);
+        let result = executor.undo(&mut doc, &mut context);
         assert!(result.is_ok());
         assert!(!executor.can_undo());
         assert!(executor.can_redo());
@@ -121,6 +120,7 @@ mod tests {
     fn test_command_executor_redo() {
         let mut executor = CommandExecutor::new(10);
         let mut doc = Document::new("test".to_string(), Size::new(100, 100), ColorSpace::Srgb);
+        let mut context = CommandContext::default();
 
         let node_id = NodeId::generate();
         let node = Node::Raster {
@@ -130,10 +130,10 @@ mod tests {
         };
 
         let command = Box::new(AddNodeCommand::new(node));
-        executor.execute(&mut doc, command).unwrap();
-        executor.undo(&mut doc).unwrap();
+        executor.execute(&mut doc, command, &mut context).unwrap();
+        executor.undo(&mut doc, &mut context).unwrap();
 
-        let result = executor.redo(&mut doc);
+        let result = executor.redo(&mut doc, &mut context);
         assert!(result.is_ok());
         assert!(executor.can_undo());
         assert!(!executor.can_redo());
@@ -143,6 +143,7 @@ mod tests {
     fn test_command_executor_clear_history() {
         let mut executor = CommandExecutor::new(10);
         let mut doc = Document::new("test".to_string(), Size::new(100, 100), ColorSpace::Srgb);
+        let mut context = CommandContext::default();
 
         let node_id = NodeId::generate();
         let node = Node::Raster {
@@ -152,7 +153,7 @@ mod tests {
         };
 
         let command = Box::new(AddNodeCommand::new(node));
-        executor.execute(&mut doc, command).unwrap();
+        executor.execute(&mut doc, command, &mut context).unwrap();
 
         executor.clear_history();
         assert_eq!(executor.history_len(), 0);
@@ -164,6 +165,7 @@ mod tests {
     fn test_command_executor_max_history() {
         let mut executor = CommandExecutor::new(3);
         let mut doc = Document::new("test".to_string(), Size::new(100, 100), ColorSpace::Srgb);
+        let mut context = CommandContext::default();
 
         // Add more commands than max_history
         for i in 0..5 {
@@ -179,7 +181,7 @@ mod tests {
             };
 
             let command = Box::new(AddNodeCommand::new(node));
-            executor.execute(&mut doc, command).unwrap();
+            executor.execute(&mut doc, command, &mut context).unwrap();
         }
 
         // History should be limited to max_history

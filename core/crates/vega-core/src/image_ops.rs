@@ -159,7 +159,7 @@ pub fn resize_layer(
             let new_height = params.size.height;
 
             // Create new tile storage for resized dimensions
-            let new_storage = TileStorage::new(new_width, new_height, tile_storage.tile_size())?;
+            let mut new_storage = TileStorage::new(new_width, new_height, tile_storage.tile_size())?;
 
             // Perform resampling (bilinear interpolation for now)
             let x_scale = old_width as f32 / new_width as f32;
@@ -467,6 +467,7 @@ pub fn flip_layer_vertical(
 }
 
 /// Command for cropping a layer.
+#[derive(Debug)]
 pub struct CropLayerCommand {
     layer_id: NodeId,
     params: CropParams,
@@ -507,8 +508,9 @@ impl Command for CropLayerCommand {
                 // Perform actual crop
                 crop_layer(document, self.layer_id, tile_storage, self.params.clone())?;
             } else {
-                // Bounds-only crop
-                *bounds = self.params.rect;
+                // Bounds-only crop - need to reconstruct the node with new bounds
+                // This is a limitation without tile storage access
+                return Err(DocumentError::InvalidOperation("Crop requires tile storage".to_string()));
             }
         }
 
@@ -601,6 +603,7 @@ impl CropLayerCommand {
 }
 
 /// Command for resizing a layer.
+#[derive(Debug)]
 pub struct ResizeLayerCommand {
     layer_id: NodeId,
     params: ResizeParams,
@@ -641,9 +644,9 @@ impl Command for ResizeLayerCommand {
                 // Perform actual resize
                 resize_layer(document, self.layer_id, tile_storage, self.params.clone())?;
             } else {
-                // Bounds-only resize
-                bounds.width = self.params.size.width;
-                bounds.height = self.params.size.height;
+                // Bounds-only resize - need to reconstruct the node with new bounds
+                // This is a limitation without tile storage access
+                return Err(DocumentError::InvalidOperation("Resize requires tile storage".to_string()));
             }
         }
 
@@ -713,6 +716,7 @@ impl ResizeLayerCommand {
 }
 
 /// Command for rotating a layer 90 degrees clockwise.
+#[derive(Debug)]
 pub struct RotateLayerCwCommand {
     layer_id: NodeId,
     original_size: Option<Size>,
@@ -793,6 +797,7 @@ impl Command for RotateLayerCwCommand {
 }
 
 /// Command for rotating a layer 90 degrees counter-clockwise.
+#[derive(Debug)]
 pub struct RotateLayerCcwCommand {
     layer_id: NodeId,
     original_size: Option<Size>,
@@ -873,6 +878,7 @@ impl Command for RotateLayerCcwCommand {
 }
 
 /// Command for flipping a layer horizontally.
+#[derive(Debug)]
 pub struct FlipLayerHorizontalCommand {
     layer_id: NodeId,
     original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
@@ -938,6 +944,7 @@ impl Command for FlipLayerHorizontalCommand {
 }
 
 /// Command for flipping a layer vertically.
+#[derive(Debug)]
 pub struct FlipLayerVerticalCommand {
     layer_id: NodeId,
     original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,

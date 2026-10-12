@@ -54,6 +54,7 @@ impl std::fmt::Display for Revision {
 }
 
 /// A revision counter for tracking document changes.
+#[derive(Debug)]
 pub struct RevisionCounter {
     counter: AtomicU64,
 }

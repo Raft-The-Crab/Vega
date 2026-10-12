@@ -44,6 +44,7 @@ impl TileHandle {
 /// # Resource Limits
 /// The storage enforces a maximum of 10,000 allocated tiles to prevent
 /// memory exhaustion. Attempting to create more tiles will return an error.
+#[derive(Debug)]
 pub struct TileStorage {
     /// Map from tile coordinates to tile handles.
     tiles: HashMap<TileCoords, TileHandle>,

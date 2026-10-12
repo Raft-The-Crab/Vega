@@ -7,12 +7,21 @@ use crate::color::ColorSpace;
 use crate::document::ids::structure::{DocumentId, NodeId};
 use crate::document::nodes::Node;
 use crate::document::revision::{Revision, RevisionCounter};
-use crate::errors::{DocumentError, Result};
+use crate::errors::DocumentError;
 use crate::geometry::Size;
 use crate::limits::{validate_dimensions, validate_name, validate_node_count, LimitError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+/// Result type alias for document operations.
+pub type Result<T> = std::result::Result<T, DocumentError>;
+
+impl From<LimitError> for DocumentError {
+    fn from(err: LimitError) -> Self {
+        DocumentError::ResourceLimit(err.to_string())
+    }
+}
 
 impl From<LimitError> for DocumentError {
     fn from(err: LimitError) -> Self {
@@ -158,8 +167,7 @@ impl Document {
             return Err(DocumentError::InvalidNode(format!(
                 "Node with ID {} already exists",
                 id
-            ))
-            .into());
+            )));
         }
 
         self.nodes.insert(id, node);
@@ -174,10 +182,10 @@ impl Document {
     pub fn add_child(&mut self, parent_id: NodeId, child_id: NodeId) -> Result<()> {
         // Verify both nodes exist
         if !self.nodes.contains_key(&parent_id) {
-            return Err(DocumentError::LayerNotFound(format!("{}", parent_id)).into());
+            return Err(DocumentError::LayerNotFound(format!("{}", parent_id)));
         }
         if !self.nodes.contains_key(&child_id) {
-            return Err(DocumentError::LayerNotFound(format!("{}", child_id)).into());
+            return Err(DocumentError::LayerNotFound(format!("{}", child_id)));
         }
 
         // Verify parent is a group
@@ -191,8 +199,7 @@ impl Document {
             _ => {
                 return Err(DocumentError::InvalidLayerOperation(
                     "Parent must be a group".to_string(),
-                )
-                .into());
+                ));
             }
         }
 
@@ -218,7 +225,7 @@ impl Document {
 
         // Verify parent exists and is a group
         if !self.nodes.contains_key(&parent_id) {
-            return Err(DocumentError::LayerNotFound(format!("{}", parent_id)).into());
+            return Err(DocumentError::LayerNotFound(format!("{}", parent_id)));
         }
 
         let parent = self.nodes.get(&parent_id)
@@ -228,8 +235,7 @@ impl Document {
             _ => {
                 return Err(DocumentError::InvalidLayerOperation(
                     "Parent must be a group".to_string(),
-                )
-                .into());
+                ));
             }
         }
 
@@ -249,7 +255,7 @@ impl Document {
     /// Remove a node from the document.
     pub fn remove_node(&mut self, id: NodeId) -> Result<()> {
         if !self.nodes.contains_key(&id) {
-            return Err(DocumentError::LayerNotFound(format!("{}", id)).into());
+            return Err(DocumentError::LayerNotFound(format!("{}", id)));
         }
 
         self.nodes.remove(&id);
@@ -330,8 +336,7 @@ impl Document {
         } else {
             Err(DocumentError::InvalidLayerOperation(
                 "Node is not a group".to_string(),
-            )
-            .into())
+            ))
         }
     }
 
@@ -356,8 +361,7 @@ impl Document {
         } else {
             Err(DocumentError::InvalidLayerOperation(
                 "Parent is not a group".to_string(),
-            )
-            .into())
+            ))
         }
     }
 }

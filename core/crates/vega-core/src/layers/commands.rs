@@ -12,6 +12,7 @@ use crate::geometry::Rect;
 use crate::document::nodes::Transform;
 
 /// Command to create a new layer.
+#[derive(Debug)]
 pub struct CreateLayerCommand {
     parent_id: Option<NodeId>,
     layer_id: Option<NodeId>,
@@ -72,6 +73,7 @@ impl Command for CreateLayerCommand {
 }
 
 /// Command to delete a layer.
+#[derive(Debug)]
 pub struct DeleteLayerCommand {
     layer_id: NodeId,
     removed_node: Option<Node>,
@@ -126,6 +128,7 @@ impl Command for DeleteLayerCommand {
 }
 
 /// Command to move a layer to a new parent.
+#[derive(Debug)]
 pub struct MoveLayerCommand {
     layer_id: NodeId,
     old_parent_id: Option<NodeId>,
@@ -181,6 +184,7 @@ impl Command for MoveLayerCommand {
 }
 
 /// Command to reorder a layer within its parent.
+#[derive(Debug)]
 pub struct ReorderLayerCommand {
     layer_id: NodeId,
     old_index: Option<usize>,
@@ -242,6 +246,7 @@ impl Command for ReorderLayerCommand {
 }
 
 /// Command to transform a layer.
+#[derive(Debug)]
 pub struct TransformLayerCommand {
     layer_id: NodeId,
     old_transform: Option<Transform>,
@@ -295,6 +300,7 @@ impl Command for TransformLayerCommand {
 }
 
 /// Command to duplicate a layer.
+#[derive(Debug)]
 pub struct DuplicateLayerCommand {
     layer_id: NodeId,
     duplicate_id: Option<NodeId>,
@@ -361,6 +367,7 @@ impl Command for DuplicateLayerCommand {
 }
 
 /// Command to merge a layer down with the layer below it.
+#[derive(Debug)]
 pub struct MergeDownCommand {
     layer_id: NodeId,
     below_id: Option<NodeId>,

@@ -229,10 +229,15 @@ impl ViewportRenderer {
         let tile_y = tile_coords.y * tile_size;
 
         // Calculate the region of this tile that falls within the viewport
-        let start_x = tile_x.saturating_sub(viewport.x);
-        let start_y = tile_y.saturating_sub(viewport.y);
-        let end_x = (tile_x + tile_size - viewport.x).min(viewport.width);
-        let end_y = (tile_y + tile_size - viewport.y).min(viewport.height);
+        // Convert viewport coordinates to i32 for signed arithmetic
+        let tile_x_i32 = tile_x as i32;
+        let tile_y_i32 = tile_y as i32;
+        let tile_size_i32 = tile_size as i32;
+        
+        let start_x = (tile_x_i32 - viewport.x).max(0) as u32;
+        let start_y = (tile_y_i32 - viewport.y).max(0) as u32;
+        let end_x = ((tile_x_i32 + tile_size_i32 - viewport.x).min(viewport.width as i32)).max(0) as u32;
+        let end_y = ((tile_y_i32 + tile_size_i32 - viewport.y).min(viewport.height as i32)).max(0) as u32;
 
         // Render the overlapping region
         for y in start_y..end_y {
@@ -242,11 +247,11 @@ impl ViewportRenderer {
                     continue; // Skip out of bounds
                 }
 
-                let tile_x = (x + viewport.x - tile_x) as u32;
-                let tile_y = (y + viewport.y - tile_y) as u32;
+                let tile_pixel_x = (x as i32 + viewport.x - tile_x_i32) as u32;
+                let tile_pixel_y = (y as i32 + viewport.y - tile_y_i32) as u32;
 
-                if tile_x < tile_size && tile_y < tile_size {
-                    let src_pixel = tile.get_pixel(tile_x, tile_y);
+                if tile_pixel_x < tile_size && tile_pixel_y < tile_size {
+                    let src_pixel = tile.get_pixel(tile_pixel_x, tile_pixel_y);
 
                     // Apply opacity
                     let src_pixel = if opacity < 1.0 {
