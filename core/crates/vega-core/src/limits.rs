@@ -57,7 +57,7 @@ pub fn validate_name(name: &str) -> Result<(), LimitError> {
         return Err(LimitError::EmptyName);
     }
     if name.len() > MAX_NAME_LENGTH {
-        return Err(LimitError::NameTooLong(name.len()));
+        return Err(LimitError::NameTooLong { len: name.len() });
     }
     Ok(())
 }
@@ -65,7 +65,7 @@ pub fn validate_name(name: &str) -> Result<(), LimitError> {
 /// Validates node count.
 pub fn validate_node_count(count: usize) -> Result<(), LimitError> {
     if count > MAX_NODES {
-        return Err(LimitError::TooManyNodes(count));
+        return Err(LimitError::TooManyNodes { count });
     }
     Ok(())
 }
@@ -73,7 +73,7 @@ pub fn validate_node_count(count: usize) -> Result<(), LimitError> {
 /// Validates group depth.
 pub fn validate_group_depth(depth: usize) -> Result<(), LimitError> {
     if depth > MAX_GROUP_DEPTH {
-        return Err(LimitError::GroupTooDeep(depth));
+        return Err(LimitError::GroupTooDeep { depth });
     }
     Ok(())
 }
@@ -87,14 +87,14 @@ pub enum LimitError {
     #[error("Name cannot be empty")]
     EmptyName,
 
-    #[error("Name too long: {0} bytes (max {1})", .0, MAX_NAME_LENGTH)]
-    NameTooLong(usize),
+    #[error("Name too long: {len} bytes (max {MAX_NAME_LENGTH})")]
+    NameTooLong { len: usize },
 
-    #[error("Too many nodes: {0} (max {1})", .0, MAX_NODES)]
-    TooManyNodes(usize),
+    #[error("Too many nodes: {count} (max {MAX_NODES})")]
+    TooManyNodes { count: usize },
 
-    #[error("Group too deep: {0} (max {1})", .0, MAX_GROUP_DEPTH)]
-    GroupTooDeep(usize),
+    #[error("Group too deep: {depth} (max {MAX_GROUP_DEPTH})")]
+    GroupTooDeep { depth: usize },
 }
 
 #[cfg(test)]

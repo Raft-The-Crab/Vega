@@ -4,7 +4,6 @@
 
 use crate::color::types::rgba::RGBA8;
 use crate::document::nodes::BlendMode;
-use crate::render::hsl::{blend_color, blend_hue, blend_luminosity, blend_saturation};
 
 /// Blend operation function type.
 pub type BlendOp = fn(RGBA8, RGBA8) -> RGBA8;

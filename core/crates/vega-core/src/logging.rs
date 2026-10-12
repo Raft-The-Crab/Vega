@@ -21,7 +21,6 @@ pub fn init_tracing() {
 }
 
 /// Logs document creation with instrumentation.
-#[instrument(skip(document))]
 pub fn log_document_creation(document_id: u64, name: &str, size: (u32, u32)) {
     info!(
         document_id,

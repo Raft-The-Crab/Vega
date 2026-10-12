@@ -372,4 +372,5 @@ impl Default for Document {
     }
 }
 
-pub mod tests;
+// Tests module - to be added later
+// pub mod tests;

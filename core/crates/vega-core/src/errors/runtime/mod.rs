@@ -26,7 +26,7 @@ pub enum RuntimeError {
     Concurrency(String),
 
     /// Image dimensions exceed supported limits.
-    #[error("image dimensions exceed limits: {0}x{1}")]
+    #[error("image dimensions exceed limits: {width}x{height}")]
     DimensionsExceeded { width: u32, height: u32 },
 
     /// Invalid parameter value provided.

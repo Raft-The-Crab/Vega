@@ -115,22 +115,6 @@ impl LayerMask {
     }
 }
 
-/// Layer masks
-///
-/// Provides layer mask functionality for controlling layer visibility on a per-pixel basis.
-
-use crate::color::types::rgba::RGBA8;
-use crate::document::ids::structure::NodeId;
-use crate::document::ids::CommandId;
-use crate::document::model::document::Document;
-use crate::document::nodes::{Node, NodeType};
-use crate::geometry::{Point, Rect, Size};
-use crate::errors::DocumentError;
-use crate::commands::base::{Command, CommandContext};
-use crate::tiles::{TileStorage, TileCoords};
-use crate::selections::SelectionMask;
-use std::collections::HashMap;
-
 /// Layer mask storage for the document.
 pub type LayerMaskStorage = HashMap<NodeId, LayerMask>;
 
