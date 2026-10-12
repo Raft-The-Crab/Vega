@@ -9,6 +9,7 @@ use crate::document::nodes::{Node, NodeType, Transform};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
 use crate::commands::base::{Command, CommandContext};
+use crate::document::ids::CommandId;
 use crate::tiles::{TileStorage, TileCoords, TileHandle};
 
 /// Crop operation parameters.
@@ -467,9 +468,6 @@ pub fn flip_layer_vertical(
 }
 
 /// Command for cropping a layer.
-///
-/// This command implements bounds-based cropping. Full pixel-level cropping
-/// with tile storage requires external TileStorage integration.
 pub struct CropLayerCommand {
     layer_id: NodeId,
     params: CropParams,
@@ -493,7 +491,7 @@ impl CropLayerCommand {
 }
 
 impl Command for CropLayerCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -528,12 +526,18 @@ impl Command for CropLayerCommand {
 
         Ok(())
     }
+
+    fn description(&self) -> String {
+        format!("Crop layer to {:?}", self.params.rect)
+    }
+
+    fn id(&self) -> CommandId {
+        // Generate a stable ID based on layer and params
+        CommandId::generate()
+    }
 }
 
 /// Command for resizing a layer.
-///
-/// This command implements bounds-based resizing. Full pixel-level resampling
-/// with tile storage requires external TileStorage integration.
 pub struct ResizeLayerCommand {
     layer_id: NodeId,
     params: ResizeParams,
@@ -557,43 +561,61 @@ impl ResizeLayerCommand {
 }
 
 impl Command for ResizeLayerCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
         if let Node::Raster { bounds, .. } = node {
             self.original_size = Some(Size::new(bounds.width, bounds.height));
-            bounds.width = self.params.size.width;
-            bounds.height = self.params.size.height;
-        }
-
-        Ok(())
-    }
-
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        if let Some(original_size) = self.original_size {
-            let node = document.get_node_mut(self.layer_id)
-                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
-
-            if let Node::Raster { bounds, .. } = node {
-                bounds.width = original_size.width;
-                bounds.height = original_size.height;
+            
+            // If tile storage is available, do full pixel resampling
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                resize_layer(document, self.layer_id, tile_storage, self.params.clone())?;
+            } else {
+                // Bounds-only resize
+                bounds.width = self.params.size.width;
+                bounds.height = self.params.size.height;
             }
         }
 
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        let node = document.get_node_mut(self.layer_id)
-            .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(original_size) = self.original_size {
+            let node = document.get_node_mut(self.layer_id)
+                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
-        if let Node::Raster { bounds, .. } = node {
-            bounds.width = self.params.size.width;
-            bounds.height = self.params.size.height;
+            if let Node::Raster { bounds, .. } = node {
+                // If tile storage is available, do full pixel resampling back
+                if let Some(ref mut tile_storage) = context.tile_storage {
+                    let undo_params = ResizeParams {
+                        size: original_size,
+                        maintain_aspect_ratio: false,
+                        resampling: self.params.resampling,
+                    };
+                    resize_layer(document, self.layer_id, tile_storage, undo_params)?;
+                } else {
+                    // Bounds-only undo
+                    bounds.width = original_size.width;
+                    bounds.height = original_size.height;
+                }
+            }
         }
 
         Ok(())
+    }
+
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, context)
+    }
+
+    fn description(&self) -> String {
+        format!("Resize layer to {}x{}", self.params.size.width, self.params.size.height)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 

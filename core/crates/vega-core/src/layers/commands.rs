@@ -5,7 +5,7 @@
 use crate::commands::base::{Command, CommandContext};
 use crate::document::model::document::Document;
 use crate::document::nodes::Node;
-use crate::document::ids::structure::NodeId;
+use crate::document::ids::{structure::NodeId, CommandId};
 use crate::document::nodes::NodeType;
 use crate::errors::DocumentError;
 use crate::geometry::Rect;
@@ -60,6 +60,14 @@ impl Command for CreateLayerCommand {
 
     fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.execute(document, _context)
+    }
+
+    fn description(&self) -> String {
+        format!("Create layer: {}", self.name)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 

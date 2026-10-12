@@ -4,6 +4,7 @@
 
 use crate::color::types::rgba::RGBA8;
 use crate::document::ids::structure::NodeId;
+use crate::document::ids::CommandId;
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
@@ -120,6 +121,7 @@ impl LayerMask {
 
 use crate::color::types::rgba::RGBA8;
 use crate::document::ids::structure::NodeId;
+use crate::document::ids::CommandId;
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
@@ -291,9 +293,6 @@ pub fn paint_on_mask(
 }
 
 /// Command for adding a layer mask.
-///
-/// This command requires external LayerMaskStorage for full undo/redo functionality.
-/// The add_layer_mask function handles the actual mask creation and storage.
 pub struct AddLayerMaskCommand {
     layer_id: NodeId,
     removed_mask: Option<LayerMask>,
@@ -315,29 +314,37 @@ impl AddLayerMaskCommand {
 }
 
 impl Command for AddLayerMaskCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Full implementation requires external LayerMaskStorage
-        // Use: add_layer_mask(document, layer_id, &mut mask_storage)
-        // For production use, pass mask_storage through command context
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            add_layer_mask(document, self.layer_id, mask_storage)?;
+        }
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Remove the mask using remove_layer_mask
-        // Save the removed mask for redo
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            self.removed_mask = Some(remove_layer_mask(document, self.layer_id, mask_storage)?);
+        }
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Re-add the mask using saved state
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            add_layer_mask(document, self.layer_id, mask_storage)?;
+        }
         Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Add layer mask to node {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 
 /// Command for removing a layer mask.
-///
-/// This command requires external LayerMaskStorage for full undo/redo functionality.
-/// The remove_layer_mask function handles the actual mask removal and returns the mask data.
 pub struct RemoveLayerMaskCommand {
     layer_id: NodeId,
     removed_mask: Option<LayerMask>,
@@ -359,29 +366,39 @@ impl RemoveLayerMaskCommand {
 }
 
 impl Command for RemoveLayerMaskCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Full implementation requires external LayerMaskStorage
-        // Use: self.removed_mask = Some(remove_layer_mask(document, layer_id, &mut mask_storage)?)
-        // For production use, pass mask_storage through command context
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            self.removed_mask = Some(remove_layer_mask(document, self.layer_id, mask_storage)?);
+        }
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Restore the removed mask
-        // For production use, re-insert into mask_storage
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            if let Some(mask) = self.removed_mask.take() {
+                mask_storage.insert(self.layer_id, mask);
+            }
+        }
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Re-remove the mask
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            self.removed_mask = Some(remove_layer_mask(document, self.layer_id, mask_storage)?);
+        }
         Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Remove layer mask from node {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 
 /// Command for applying selection as layer mask.
-///
-/// This command requires external LayerMaskStorage for full undo/redo functionality.
-/// The apply_selection_as_mask function handles the actual mask application.
 pub struct ApplySelectionAsMaskCommand {
     layer_id: NodeId,
     selection: SelectionMask,
@@ -405,23 +422,41 @@ impl ApplySelectionAsMaskCommand {
 }
 
 impl Command for ApplySelectionAsMaskCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Full implementation requires external LayerMaskStorage
-        // Use: apply_selection_as_mask(document, layer_id, &selection, &mut mask_storage)
-        // Save previous mask for undo
-        // For production use, pass mask_storage through command context
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            // Save previous mask if it exists
+            self.previous_mask = mask_storage.get(&self.layer_id).cloned();
+            
+            apply_selection_as_mask(document, self.layer_id, &self.selection, mask_storage)?;
+        }
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Restore the previous mask
-        // For production use, re-insert into mask_storage
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            if let Some(mask) = self.previous_mask.take() {
+                mask_storage.insert(self.layer_id, mask);
+            } else {
+                mask_storage.remove(&self.layer_id);
+            }
+        }
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Re-apply the selection as mask
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut mask_storage) = context.mask_storage {
+            self.previous_mask = mask_storage.get(&self.layer_id).cloned();
+            apply_selection_as_mask(document, self.layer_id, &self.selection, mask_storage)?;
+        }
         Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Apply selection as mask to node {}", self.layer_id)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
     }
 }
 

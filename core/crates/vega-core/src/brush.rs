@@ -9,6 +9,7 @@ use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
 use crate::commands::base::{Command, CommandContext};
+use crate::document::ids::CommandId;
 use crate::tiles::{TileStorage, TileCoords, TileHandle};
 
 /// Brush tool parameters.
@@ -377,22 +378,74 @@ impl BrushCommand {
 }
 
 impl Command for BrushCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Full implementation requires external tile storage
-        // The paint_brush function handles actual pixel processing
-        // This command serves as the undo/redo wrapper
-        // For production use, integrate with tile storage and save tile state
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            // Save original tile state before painting
+            let brush_radius = self.params.size as i32 / 2;
+            let brush_x = self.params.position.x as i32;
+            let brush_y = self.params.position.y as i32;
+
+            let brush_rect = Rect::new(
+                (brush_x - brush_radius).max(0) as u32,
+                (brush_y - brush_radius).max(0) as u32,
+                self.params.size,
+                self.params.size,
+            );
+
+            for tile_coords in tile_storage.tiles_in_rect(
+                brush_rect.x,
+                brush_rect.y,
+                brush_rect.width,
+                brush_rect.height,
+            ) {
+                if let Some(handle) = tile_storage.get(tile_coords) {
+                    if let Some(tile) = tile_storage.get_tile(handle) {
+                        let tile_data = tile.data().to_vec();
+                        self.modified_tiles.push((tile_coords, tile_data));
+                    }
+                }
+            }
+
+            // Paint the brush
+            paint_brush(document, self.layer_id, tile_storage, self.params.clone())?;
+        }
+
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Restore saved tile state from modified_tiles
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            // Restore saved tile state
+            for (tile_coords, tile_data) in &self.modified_tiles {
+                if let Ok(handle) = tile_storage.get_or_create(*tile_coords) {
+                    if let Some(tile) = tile_storage.get_tile_mut(handle) {
+                        let tile_pixels = tile.data_mut();
+                        tile_pixels.copy_from_slice(tile_data);
+                    }
+                }
+            }
+        }
+
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Re-apply brush using saved params
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            paint_brush(document, self.layer_id, tile_storage, self.params.clone())?;
+        }
         Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Brush at ({}, {})", self.params.position.x, self.params.position.y)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
     }
 }
 
@@ -420,22 +473,74 @@ impl EraserCommand {
 }
 
 impl Command for EraserCommand {
-    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Full implementation requires external tile storage
-        // The paint_eraser function handles actual pixel processing
-        // This command serves as the undo/redo wrapper
-        // For production use, integrate with tile storage and save tile state
+    fn execute(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            // Save original tile state before erasing
+            let eraser_radius = self.params.size as i32 / 2;
+            let eraser_x = self.params.position.x as i32;
+            let eraser_y = self.params.position.y as i32;
+
+            let eraser_rect = Rect::new(
+                (eraser_x - eraser_radius).max(0) as u32,
+                (eraser_y - eraser_radius).max(0) as u32,
+                self.params.size,
+                self.params.size,
+            );
+
+            for tile_coords in tile_storage.tiles_in_rect(
+                eraser_rect.x,
+                eraser_rect.y,
+                eraser_rect.width,
+                eraser_rect.height,
+            ) {
+                if let Some(handle) = tile_storage.get(tile_coords) {
+                    if let Some(tile) = tile_storage.get_tile(handle) {
+                        let tile_data = tile.data().to_vec();
+                        self.modified_tiles.push((tile_coords, tile_data));
+                    }
+                }
+            }
+
+            // Paint the eraser
+            paint_eraser(document, self.layer_id, tile_storage, self.params.clone())?;
+        }
+
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Restore saved tile state from modified_tiles
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            // Restore saved tile state
+            for (tile_coords, tile_data) in &self.modified_tiles {
+                if let Ok(handle) = tile_storage.get_or_create(*tile_coords) {
+                    if let Some(tile) = tile_storage.get_tile_mut(handle) {
+                        let tile_pixels = tile.data_mut();
+                        tile_pixels.copy_from_slice(tile_data);
+                    }
+                }
+            }
+        }
+
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        // Re-apply eraser using saved params
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            paint_eraser(document, self.layer_id, tile_storage, self.params.clone())?;
+        }
         Ok(())
+    }
+
+    fn description(&self) -> String {
+        format!("Eraser at ({}, {})", self.params.position.x, self.params.position.y)
+    }
+
+    fn id(&self) -> CommandId {
+        CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
     }
 }
 
