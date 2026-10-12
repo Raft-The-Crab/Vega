@@ -52,20 +52,26 @@
 //! - [`render`]: CPU rendering pipeline
 //! - [`tiles`]: Tile-based pixel storage
 
+pub mod async_patterns;
 pub mod color;
 pub mod commands;
+pub mod config;
 pub mod document;
 pub mod errors;
 pub mod geometry;
 pub mod integration_tests;
 pub mod layers;
 pub mod limits;
+pub mod logging;
 pub mod metrics;
+pub mod recovery;
 pub mod render;
+pub mod security;
 pub mod tiles;
 
 pub use color::{ColorSpace, Rgba, Rgba8, Rgba16, Rgba32};
 pub use commands::{Command, CommandExecutor, Transaction};
+pub use config::{CacheConfig, ConfigError, MemoryConfig, RenderConfig, TileConfig, VegaConfig};
 pub use document::{
     AdjustmentType, BlendMode, CommandId, Document, DocumentId, DocumentMetadata, LayerId, MaskData,
     Node, NodeId, NodeProperties, NodeType, Revision, RevisionCounter, RevisionGuard,
@@ -78,6 +84,7 @@ pub use layers::{
     MoveLayerCommand, ReorderLayerCommand, TransformLayerCommand,
 };
 pub use limits::{LimitError, MAX_DOCUMENT_HEIGHT, MAX_DOCUMENT_WIDTH, MAX_NODES};
+pub use logging::{init_tracing, log_cache_event, log_command_execution, log_document_creation, log_error, log_memory_usage, log_performance, log_render_operation, log_tile_allocation};
 pub use metrics::{MetricsTracker, RenderMetrics, RenderTimer};
 pub use render::{blend_pixels, BlendOp, CacheEntry, Compositor, Hsl, RenderCache, ViewportRenderer,
             apply_adjustment, blend_color, blend_hue, blend_luminosity, blend_saturation, luminance,
