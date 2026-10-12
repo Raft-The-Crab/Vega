@@ -472,6 +472,7 @@ pub struct CropLayerCommand {
     layer_id: NodeId,
     params: CropParams,
     original_bounds: Option<Rect>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
 }
 
 impl CropLayerCommand {
@@ -497,31 +498,53 @@ impl Command for CropLayerCommand {
 
         if let Node::Raster { bounds, .. } = node {
             self.original_bounds = Some(*bounds);
-            *bounds = self.params.rect;
-        }
-
-        Ok(())
-    }
-
-    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
-        if let Some(original_bounds) = self.original_bounds {
-            let node = document.get_node_mut(self.layer_id)
-                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
-
-            if let Node::Raster { bounds, .. } = node {
-                *bounds = original_bounds;
+            
+            // If tile storage is available, do full pixel cropping and save original data
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                // Save original tile data for undo
+                self.original_tile_data = Some(Self::save_tile_data(tile_storage, *bounds));
+                
+                // Perform actual crop
+                crop_layer(document, self.layer_id, tile_storage, self.params.clone())?;
+            } else {
+                // Bounds-only crop
+                *bounds = self.params.rect;
             }
         }
 
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
+        if let Some(original_bounds) = self.original_bounds {
+            let node = document.get_node_mut(self.layer_id)
+                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+            if let Node::Raster { bounds, .. } = node {
+                *bounds = original_bounds;
+                
+                // Restore original tile data if available
+                if let Some(ref mut tile_storage) = context.tile_storage {
+                    if let Some(ref original_data) = self.original_tile_data {
+                        Self::restore_tile_data(tile_storage, original_data)?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node_mut(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
         if let Node::Raster { bounds, .. } = node {
-            *bounds = self.params.rect;
+            if let Some(ref mut tile_storage) = context.tile_storage {
+                crop_layer(document, self.layer_id, tile_storage, self.params.clone())?;
+            } else {
+                *bounds = self.params.rect;
+            }
         }
 
         Ok(())
@@ -532,8 +555,48 @@ impl Command for CropLayerCommand {
     }
 
     fn id(&self) -> CommandId {
-        // Generate a stable ID based on layer and params
         CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
+    }
+}
+
+impl CropLayerCommand {
+    /// Save tile data for undo.
+    fn save_tile_data(tile_storage: &TileStorage, bounds: Rect) -> Vec<(TileCoords, Vec<RGBA8>)> {
+        let mut data = Vec::new();
+        
+        for tile_coords in tile_storage.tiles_in_rect(bounds.x, bounds.y, bounds.width, bounds.height) {
+            if let Some(handle) = tile_storage.get(tile_coords) {
+                if let Some(tile) = tile_storage.get_tile(handle) {
+                    let pixels: Vec<RGBA8> = (0..tile.size())
+                        .flat_map(|y| (0..tile.size()).map(move |x| tile.get_pixel(x, y)))
+                        .collect();
+                    data.push((tile_coords, pixels));
+                }
+            }
+        }
+        
+        data
+    }
+
+    /// Restore tile data from saved state.
+    fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<RGBA8>)]) -> Result<(), DocumentError> {
+        for (coords, pixels) in data {
+            if let Ok(handle) = tile_storage.get_or_create(*coords) {
+                if let Some(tile) = tile_storage.get_tile_mut(handle) {
+                    let tile_size = tile.size();
+                    for (i, &pixel) in pixels.iter().enumerate() {
+                        let x = (i % tile_size as usize) as u32;
+                        let y = (i / tile_size as usize) as u32;
+                        tile.set_pixel(x, y, pixel);
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -542,6 +605,7 @@ pub struct ResizeLayerCommand {
     layer_id: NodeId,
     params: ResizeParams,
     original_size: Option<Size>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
 }
 
 impl ResizeLayerCommand {
@@ -570,6 +634,10 @@ impl Command for ResizeLayerCommand {
             
             // If tile storage is available, do full pixel resampling
             if let Some(ref mut tile_storage) = context.tile_storage {
+                // Save original tile data for undo
+                self.original_tile_data = Some(CropLayerCommand::save_tile_data(tile_storage, *bounds));
+                
+                // Perform actual resize
                 resize_layer(document, self.layer_id, tile_storage, self.params.clone())?;
             } else {
                 // Bounds-only resize
@@ -587,18 +655,14 @@ impl Command for ResizeLayerCommand {
                 .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
             if let Node::Raster { bounds, .. } = node {
-                // If tile storage is available, do full pixel resampling back
+                bounds.width = original_size.width;
+                bounds.height = original_size.height;
+                
+                // Restore original tile data if available
                 if let Some(ref mut tile_storage) = context.tile_storage {
-                    let undo_params = ResizeParams {
-                        size: original_size,
-                        maintain_aspect_ratio: false,
-                        resampling: self.params.resampling,
-                    };
-                    resize_layer(document, self.layer_id, tile_storage, undo_params)?;
-                } else {
-                    // Bounds-only undo
-                    bounds.width = original_size.width;
-                    bounds.height = original_size.height;
+                    if let Some(ref original_data) = self.original_tile_data {
+                        CropLayerCommand::restore_tile_data(tile_storage, original_data)?;
+                    }
                 }
             }
         }
@@ -607,7 +671,19 @@ impl Command for ResizeLayerCommand {
     }
 
     fn redo(&mut self, document: &mut Document, context: &mut CommandContext) -> Result<(), DocumentError> {
-        self.execute(document, context)
+        if let Some(ref mut tile_storage) = context.tile_storage {
+            resize_layer(document, self.layer_id, tile_storage, self.params.clone())?;
+        } else {
+            let node = document.get_node_mut(self.layer_id)
+                .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
+
+            if let Node::Raster { bounds, .. } = node {
+                bounds.width = self.params.size.width;
+                bounds.height = self.params.size.height;
+            }
+        }
+
+        Ok(())
     }
 
     fn description(&self) -> String {
@@ -616,6 +692,22 @@ impl Command for ResizeLayerCommand {
 
     fn id(&self) -> CommandId {
         CommandId::generate()
+    }
+
+    fn is_destructive(&self) -> bool {
+        true
+    }
+}
+
+impl ResizeLayerCommand {
+    /// Save tile data for undo.
+    fn save_tile_data(tile_storage: &TileStorage, bounds: Rect) -> Vec<(TileCoords, Vec<RGBA8>)> {
+        CropLayerCommand::save_tile_data(tile_storage, bounds)
+    }
+
+    /// Restore tile data from saved state.
+    fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<RGBA8>)]) -> Result<(), DocumentError> {
+        CropLayerCommand::restore_tile_data(tile_storage, data)
     }
 }
 
