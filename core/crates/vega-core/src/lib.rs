@@ -59,6 +59,7 @@ pub mod config;
 pub mod document;
 pub mod errors;
 pub mod brush;
+pub mod export;
 pub mod geometry;
 pub mod masks;
 pub mod selections;
@@ -83,6 +84,7 @@ pub use document::{
 };
 pub use errors::{VegaError, Result};
 pub use brush::{paint_brush, paint_eraser, BrushCommand, BrushParams, EraserCommand, EraserParams};
+pub use export::{export_document, export_to_jpeg, export_to_png, export_to_webp, export_with_params, ExportFormat, ExportParams, ExportQuality};
 pub use geometry::{Point, Rect, Size};
 pub use masks::{add_layer_mask, apply_selection_as_mask, paint_on_mask, remove_layer_mask, AddLayerMaskCommand, ApplySelectionAsMaskCommand, LayerMask, LayerMaskStorage, RemoveLayerMaskCommand};
 pub use selections::{create_elliptical_selection, create_lasso_selection, create_magic_wand_selection, create_rectangular_selection, color_distance, EllipticalSelectionParams, LassoSelectionParams, MagicWandParams, RectangularSelectionCommand, RectangularSelectionParams, SelectionMask, SelectionMode, SelectionShape};

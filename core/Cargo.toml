@@ -46,6 +46,7 @@ sha2 = "0.10"
 
 # File I/O
 walkdir = "2.5"
+tempfile = "3.27"
 
 # Documentation
 cargo-docs = "0.6"
