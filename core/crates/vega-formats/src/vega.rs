@@ -11,6 +11,7 @@ use thiserror::Error;
 use zip::{write::FileOptions, ZipArchive, ZipWriter};
 use vega_core::{Document, Result as CoreResult};
 use crate::integrity;
+use crate::layers::LayerSerializer;
 use crate::thumbnail;
 
 /// VEGA file format version.
@@ -59,6 +60,8 @@ pub struct Manifest {
     pub document_checksum: String,
     /// SHA-256 checksum of thumbnail.png.
     pub thumbnail_checksum: String,
+    /// Number of layers in the document.
+    pub layer_count: usize,
 }
 
 impl Default for Manifest {
@@ -70,6 +73,7 @@ impl Default for Manifest {
             vega_version: env!("CARGO_PKG_VERSION").to_string(),
             document_checksum: String::new(),
             thumbnail_checksum: String::new(),
+            layer_count: 0,
         }
     }
 }
@@ -116,6 +120,7 @@ impl VegaProject {
         let manifest = Manifest {
             document_checksum,
             thumbnail_checksum,
+            layer_count: document.node_count(),
             ..Default::default()
         };
         let manifest_json = serde_json::to_string_pretty(&manifest)?;
@@ -129,6 +134,9 @@ impl VegaProject {
         // Write thumbnail
         zip.start_file("previews/thumbnail.png", FileOptions::default())?;
         zip.write_all(&thumbnail_png)?;
+
+        // Write layer metadata
+        LayerSerializer::serialize_layers(document.nodes(), &mut zip)?;
 
         // Finish the ZIP
         zip.finish()?;
@@ -260,6 +268,7 @@ mod tests {
         assert_eq!(manifest.format_version, FORMAT_VERSION);
         assert!(manifest.document_checksum.is_empty());
         assert!(manifest.thumbnail_checksum.is_empty());
+        assert_eq!(manifest.layer_count, 0);
     }
 
     #[test]

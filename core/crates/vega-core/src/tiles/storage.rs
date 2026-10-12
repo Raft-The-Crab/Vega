@@ -250,6 +250,11 @@ impl TileStorage {
         self.tiles.iter().map(|(&coords, &handle)| (coords, handle))
     }
 
+    /// Returns the number of allocated tiles.
+    pub fn len(&self) -> usize {
+        self.tiles.len()
+    }
+
     /// Returns tiles that intersect with the given pixel rectangle.
     pub fn tiles_in_rect(
         &self,
