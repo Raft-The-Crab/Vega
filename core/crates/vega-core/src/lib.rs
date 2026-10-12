@@ -58,6 +58,7 @@ pub mod commands;
 pub mod config;
 pub mod document;
 pub mod errors;
+pub mod brush;
 pub mod geometry;
 pub mod image_ops;
 pub mod integration_tests;
@@ -79,6 +80,7 @@ pub use document::{
     RevisionMismatchError, ShapeType, Transform,
 };
 pub use errors::{VegaError, Result};
+pub use brush::{paint_brush, paint_eraser, BrushCommand, BrushParams, EraserCommand, EraserParams};
 pub use geometry::{Point, Rect, Size};
 pub use image_ops::{calculate_aspect_ratio_size, crop_layer, flip_layer_horizontal, flip_layer_vertical, resize_layer, rotate_layer_ccw, rotate_layer_cw, CropLayerCommand, CropParams, ResizeLayerCommand, ResizeParams, ResamplingMethod};
 pub use layers::{
