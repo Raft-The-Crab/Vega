@@ -17,6 +17,7 @@ glam.workspace = true
 nalgebra.workspace = true
 rgb.workspace = true
 bytemuck.workspace = true
+fastrand.workspace = true
 
 [dev-dependencies]
 criterion = "0.5"

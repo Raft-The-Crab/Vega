@@ -4,6 +4,7 @@
 
 use crate::color::types::rgba::RGBA8;
 use crate::document::nodes::BlendMode;
+use crate::render::hsl::{blend_color, blend_hue, blend_luminosity, blend_saturation};
 
 /// Blend operation function type.
 pub type BlendOp = fn(RGBA8, RGBA8) -> RGBA8;
@@ -222,27 +223,22 @@ fn blend_exclusion(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-// HSL-based blend modes (simplified implementations)
+// HSL-based blend modes using proper HSL conversions
 
 fn blend_hue(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    // Simplified: just return src for now
-    // Full implementation would convert to HSL, blend hue, convert back
-    src
+    crate::render::hsl::blend_hue(dest, src)
 }
 
 fn blend_saturation(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    // Simplified: just return src for now
-    src
+    crate::render::hsl::blend_saturation(dest, src)
 }
 
 fn blend_color(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    // Simplified: just return src for now
-    src
+    crate::render::hsl::blend_color(dest, src)
 }
 
 fn blend_luminosity(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    // Simplified: just return src for now
-    src
+    crate::render::hsl::blend_luminosity(dest, src)
 }
 
 #[cfg(test)]

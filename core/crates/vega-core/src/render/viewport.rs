@@ -9,6 +9,7 @@ use crate::document::ids::structure::NodeId;
 use crate::errors::DocumentError;
 use crate::geometry::Rect;
 use crate::render::compositing::{alpha_blend, Compositor};
+use crate::render::transform::{is_identity_transform, transform_rect};
 use crate::tiles::{TileStorage, TileCoords};
 
 /// Viewport renderer for displaying document regions.
@@ -143,8 +144,25 @@ impl ViewportRenderer {
             ));
         }
 
+        // Apply transform if not identity
+        let transform = properties.transform;
+        let effective_bounds = if is_identity_transform(
+            transform.translation,
+            transform.scale,
+            transform.rotation,
+        ) {
+            *bounds
+        } else {
+            transform_rect(
+                *bounds,
+                transform.translation,
+                transform.scale,
+                transform.rotation,
+            )
+        };
+
         // Calculate intersection with viewport
-        let intersection = viewport.intersection(*bounds).unwrap_or(Rect::default());
+        let intersection = viewport.intersection(effective_bounds).unwrap_or(Rect::default());
 
         if intersection.width == 0 || intersection.height == 0 {
             return Ok(());
@@ -172,6 +190,7 @@ impl ViewportRenderer {
                         buffer,
                         &compositor,
                         properties.opacity,
+                        transform,
                     )?;
                 }
             }
@@ -189,6 +208,7 @@ impl ViewportRenderer {
         buffer: &mut [RGBA8],
         compositor: &Compositor,
         opacity: f32,
+        transform: crate::document::nodes::Transform,
     ) -> Result<(), DocumentError> {
         let tile_coords = tile.coords();
         let tile_size = tile.size();

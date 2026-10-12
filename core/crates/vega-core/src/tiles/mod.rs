@@ -7,8 +7,10 @@
 //! - Memory efficiency (sparse representation)
 //! - Parallel processing (work on tiles independently)
 
+pub mod memory;
 pub mod storage;
 pub mod tile;
 
+pub use memory::{EvictionPolicy, MemoryStats, TileMemoryManager};
 pub use storage::{TileStorage, TileHandle};
 pub use tile::{Tile, TileCoords, TileIndex};

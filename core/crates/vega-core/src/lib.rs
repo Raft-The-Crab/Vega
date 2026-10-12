@@ -60,6 +60,7 @@ pub mod geometry;
 pub mod integration_tests;
 pub mod layers;
 pub mod limits;
+pub mod metrics;
 pub mod render;
 pub mod tiles;
 
@@ -77,5 +78,9 @@ pub use layers::{
     MoveLayerCommand, ReorderLayerCommand, TransformLayerCommand,
 };
 pub use limits::{LimitError, MAX_DOCUMENT_HEIGHT, MAX_DOCUMENT_WIDTH, MAX_NODES};
-pub use render::{blend_pixels, BlendOp, CacheEntry, Compositor, RenderCache, ViewportRenderer};
-pub use tiles::{Tile, TileCoords, TileHandle, TileIndex, TileStorage};
+pub use metrics::{MetricsTracker, RenderMetrics, RenderTimer};
+pub use render::{blend_pixels, BlendOp, CacheEntry, Compositor, Hsl, RenderCache, ViewportRenderer,
+            apply_adjustment, blend_color, blend_hue, blend_luminosity, blend_saturation, luminance,
+            inverse_transform_point, is_identity_transform, render_tiles_parallel, render_tiles_sequential,
+            transform_point, transform_rect, transformed_bounds};
+pub use tiles::{EvictionPolicy, MemoryStats, Tile, TileCoords, TileHandle, TileIndex, TileMemoryManager, TileStorage};
