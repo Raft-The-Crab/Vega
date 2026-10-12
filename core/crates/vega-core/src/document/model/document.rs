@@ -181,7 +181,8 @@ impl Document {
         }
 
         // Verify parent is a group
-        let parent = self.nodes.get(&parent_id).unwrap();
+        let parent = self.nodes.get(&parent_id)
+            .ok_or_else(|| DocumentError::LayerNotFound(format!("{}", parent_id)))?;
         match parent {
             Node::Group { children, .. } => {
                 // This is a simplified check - in reality we'd need to handle the parent's children list
@@ -220,7 +221,8 @@ impl Document {
             return Err(DocumentError::LayerNotFound(format!("{}", parent_id)).into());
         }
 
-        let parent = self.nodes.get(&parent_id).unwrap();
+        let parent = self.nodes.get(&parent_id)
+            .ok_or_else(|| DocumentError::LayerNotFound(format!("{}", parent_id)))?;
         match parent {
             Node::Group { .. } => {}
             _ => {

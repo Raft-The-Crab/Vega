@@ -109,20 +109,31 @@ impl ViewportRenderer {
                     self.render_node(document, *child_id, viewport, buffer)?;
                 }
             }
-            Node::Adjustment { .. } => {
-                // Adjustments are applied during raster rendering (placeholder)
+            Node::Adjustment { properties, .. } => {
+                // Adjustment layers modify the rendering pipeline
+                // They are applied to layers below them
+                // For now, adjustments are not rendered directly in viewport
+                // They will be applied during the compositing phase in future implementation
             }
             Node::Text { .. } => {
-                // Text rendering (placeholder)
+                // Text rendering requires font rendering engine
+                // This is a P2 feature for now
+                // Text nodes will be skipped in viewport rendering until text rendering is implemented
             }
             Node::Shape { .. } => {
-                // Shape rendering (placeholder)
+                // Shape rendering requires vector path rendering
+                // This is a P2 feature for now
+                // Shape nodes will be skipped in viewport rendering until shape rendering is implemented
             }
             Node::Mask { .. } => {
-                // Mask rendering (placeholder)
+                // Mask rendering requires alpha channel manipulation
+                // This is a P2 feature for now
+                // Mask nodes will be skipped in viewport rendering until mask rendering is implemented
             }
             Node::Asset { .. } => {
-                // Asset rendering (placeholder)
+                // Asset rendering requires external resource loading
+                // This is a P2 feature for now
+                // Asset nodes will be skipped in viewport rendering until asset rendering is implemented
             }
         }
 

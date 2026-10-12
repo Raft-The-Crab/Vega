@@ -69,10 +69,10 @@ pub fn transform_rect(
         .collect();
 
     // Find bounding box
-    let min_x = transformed.iter().map(|p| p.x).min().unwrap();
-    let min_y = transformed.iter().map(|p| p.y).min().unwrap();
-    let max_x = transformed.iter().map(|p| p.x).max().unwrap();
-    let max_y = transformed.iter().map(|p| p.y).max().unwrap();
+    let min_x = transformed.iter().map(|p| p.x).min().expect("Transformed corners should not be empty");
+    let min_y = transformed.iter().map(|p| p.y).min().expect("Transformed corners should not be empty");
+    let max_x = transformed.iter().map(|p| p.x).max().expect("Transformed corners should not be empty");
+    let max_y = transformed.iter().map(|p| p.y).max().expect("Transformed corners should not be empty");
 
     Rect::new(
         min_x,
