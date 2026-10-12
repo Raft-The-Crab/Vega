@@ -2,7 +2,7 @@
 //!
 //! Provides painting tools for raster editing with full pixel-level processing.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
@@ -23,7 +23,7 @@ pub struct BrushParams {
     /// Brush hardness (0.0 to 1.0).
     pub hardness: f32,
     /// Brush color.
-    pub color: RGBA8,
+    pub color: Rgba8,
 }
 
 /// Eraser tool parameters.
@@ -317,7 +317,7 @@ fn paint_eraser_on_tile(
             let eraser_strength = params.opacity * falloff;
             let new_alpha = (current_pixel.a as f32 * (1.0 - eraser_strength)) as u8;
 
-            let erased = RGBA8 {
+            let erased = Rgba8 {
                 r: current_pixel.r,
                 g: current_pixel.g,
                 b: current_pixel.b,
@@ -331,10 +331,10 @@ fn paint_eraser_on_tile(
 
 /// Blends a color with current pixel based on opacity.
 fn blend_color_with_opacity(
-    current: RGBA8,
-    new: RGBA8,
+    current: Rgba8,
+    new: Rgba8,
     opacity: f32,
-) -> RGBA8 {
+) -> Rgba8 {
     if opacity >= 1.0 {
         return new;
     }
@@ -350,14 +350,14 @@ fn blend_color_with_opacity(
     let b = (current.b as f32 * inv_alpha + new.b as f32 * alpha / 255.0) as u8;
     let a = (current.a as f32 * inv_alpha + alpha) as u8;
 
-    RGBA8 { r, g, b, a }
+    Rgba8 { r, g, b, a }
 }
 
 /// Command for brush painting.
 pub struct BrushCommand {
     layer_id: NodeId,
     params: BrushParams,
-    modified_tiles: Vec<(TileCoords, Vec<RGBA8>)>,
+    modified_tiles: Vec<(TileCoords, Vec<Rgba8>)>,
 }
 
 impl BrushCommand {
@@ -452,7 +452,7 @@ impl Command for BrushCommand {
 pub struct EraserCommand {
     layer_id: NodeId,
     params: EraserParams,
-    modified_tiles: Vec<(TileCoords, Vec<RGBA8>)>,
+    modified_tiles: Vec<(TileCoords, Vec<Rgba8>)>,
 }
 
 impl EraserCommand {
@@ -570,7 +570,7 @@ mod tests {
             size: 10,
             opacity: 1.0,
             hardness: 1.0,
-            color: RGBA8::RED,
+            color: Rgba8::RED,
         };
 
         let result = paint_brush(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap(), params);
@@ -621,7 +621,7 @@ mod tests {
             size: 0, // Invalid
             opacity: 1.0,
             hardness: 1.0,
-            color: RGBA8::RED,
+            color: Rgba8::RED,
         };
 
         let result = paint_brush(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap(), params);
@@ -647,7 +647,7 @@ mod tests {
             size: 10,
             opacity: 1.5, // Invalid
             hardness: 1.0,
-            color: RGBA8::RED,
+            color: Rgba8::RED,
         };
 
         let result = paint_brush(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap(), params);
@@ -656,8 +656,8 @@ mod tests {
 
     #[test]
     fn test_blend_color_with_opacity() {
-        let current = RGBA8::BLUE;
-        let new = RGBA8::RED;
+        let current = Rgba8::BLUE;
+        let new = Rgba8::RED;
         let blended = blend_color_with_opacity(current, new, 0.5);
 
         // Result should be a blend of blue and red

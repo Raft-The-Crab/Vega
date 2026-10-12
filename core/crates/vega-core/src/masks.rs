@@ -2,7 +2,7 @@
 //!
 //! Provides layer mask functionality for controlling layer visibility on a per-pixel basis.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
@@ -89,13 +89,13 @@ impl LayerMask {
     }
 
     /// Applies the mask to a pixel, adjusting its alpha.
-    pub fn apply_to_pixel(&self, pixel: RGBA8, x: u32, y: u32) -> RGBA8 {
+    pub fn apply_to_pixel(&self, pixel: Rgba8, x: u32, y: u32) -> Rgba8 {
         if !self.enabled {
             return pixel;
         }
 
         let mask_value = self.get(x, y) as f32 / 255.0;
-        RGBA8 {
+        Rgba8 {
             r: pixel.r,
             g: pixel.g,
             b: pixel.b,
@@ -481,7 +481,7 @@ mod tests {
         let mask = LayerMask::new(100, 100);
         mask.set(50, 50, 128);
 
-        let pixel = RGBA8::RED;
+        let pixel = Rgba8::RED;
         let masked = mask.apply_to_pixel(pixel, 50, 50);
 
         assert_eq!(masked.r, 255);

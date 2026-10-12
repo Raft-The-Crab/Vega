@@ -75,7 +75,8 @@ pub mod security;
 pub mod tiles;
 
 pub use color::{ColorSpace, Rgba, Rgba8, Rgba16, Rgba32};
-pub use commands::{Command, CommandContext, CommandExecutor, Transaction};
+pub use commands::{Command, CommandExecutor, Transaction};
+pub use commands::base::CommandContext;
 pub use config::{CacheConfig, ConfigError, MemoryConfig, RenderConfig, TileConfig, VegaConfig};
 pub use document::{
     AdjustmentType, BlendMode, CommandId, Document, DocumentId, DocumentMetadata, LayerId, MaskData,

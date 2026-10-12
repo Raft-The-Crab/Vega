@@ -55,11 +55,11 @@ mod tests {
 
         // Render viewport
         let viewport = Rect::new(0, 0, 100, 100);
-        let mut buffer = vec![crate::color::RGBA8::TRANSPARENT; 100 * 100];
+        let mut buffer = vec![crate::color::Rgba8::TRANSPARENT; 100 * 100];
         renderer.render_viewport(&document, viewport, &mut buffer).unwrap();
 
         // Verify buffer was filled (should be transparent since layer has no pixel data)
-        assert!(buffer.iter().all(|&p| p == crate::color::RGBA8::TRANSPARENT));
+        assert!(buffer.iter().all(|&p| p == crate::color::Rgba8::TRANSPARENT));
     }
 
     #[test]
@@ -126,8 +126,8 @@ mod tests {
 
         // Modify tile data
         if let Some(tile) = tile_storage.get_tile_mut(handle1) {
-            tile.fill(crate::color::RGBA8::RED);
-            assert_eq!(tile.get_pixel(0, 0), crate::color::RGBA8::RED);
+            tile.fill(crate::color::Rgba8::RED);
+            assert_eq!(tile.get_pixel(0, 0), crate::color::Rgba8::RED);
         }
 
         // Get tiles in rectangle
@@ -196,11 +196,11 @@ mod tests {
         let renderer = ViewportRenderer::new(tile_storage);
 
         let viewport = Rect::new(0, 0, 100, 100);
-        let mut buffer = vec![crate::color::RGBA8::TRANSPARENT; 100 * 100];
+        let mut buffer = vec![crate::color::Rgba8::TRANSPARENT; 100 * 100];
         renderer.render_viewport(&document, viewport, &mut buffer).unwrap();
 
         // Should be all transparent
-        assert!(buffer.iter().all(|&p| p == crate::color::RGBA8::TRANSPARENT));
+        assert!(buffer.iter().all(|&p| p == crate::color::Rgba8::TRANSPARENT));
     }
 
     #[test]
@@ -303,7 +303,7 @@ mod tests {
 
         // Viewport larger than document
         let viewport = Rect::new(0, 0, 200, 200);
-        let mut buffer = vec![crate::color::RGBA8::TRANSPARENT; 200 * 200];
+        let mut buffer = vec![crate::color::Rgba8::TRANSPARENT; 200 * 200];
         let result = renderer.render_viewport(&document, viewport, &mut buffer);
         assert!(result.is_err()); // Should fail due to bounds check
     }

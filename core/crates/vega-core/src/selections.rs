@@ -2,8 +2,8 @@
 //!
 //! Provides selection tools for defining regions of interest in images.
 
-use crate::color::types::rgba::RGBA8;
-use crate::document::ids::{structure::NodeId, CommandId};
+use crate::color::types::Rgba8;
+use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
@@ -347,10 +347,10 @@ pub fn create_magic_wand_selection(
             let local_y = start_y % tile_storage.tile_size();
             tile.get_pixel(local_x, local_y)
         } else {
-            RGBA8::TRANSPARENT
+            Rgba8::TRANSPARENT
         }
     } else {
-        RGBA8::TRANSPARENT
+        Rgba8::TRANSPARENT
     };
 
     // Flood fill algorithm
@@ -381,10 +381,10 @@ pub fn create_magic_wand_selection(
                 let local_y = y % tile_storage.tile_size();
                 tile.get_pixel(local_x, local_y)
             } else {
-                RGBA8::TRANSPARENT
+                Rgba8::TRANSPARENT
             }
         } else {
-            RGBA8::TRANSPARENT
+            Rgba8::TRANSPARENT
         };
 
         // Check color similarity
@@ -411,7 +411,7 @@ pub fn create_magic_wand_selection(
 }
 
 /// Calculates color distance for magic wand.
-fn color_distance(c1: RGBA8, c2: RGBA8) -> f32 {
+fn color_distance(c1: Rgba8, c2: Rgba8) -> f32 {
     let dr = (c1.r as f32 - c2.r as f32).abs();
     let dg = (c1.g as f32 - c2.g as f32).abs();
     let db = (c1.b as f32 - c2.b as f32).abs();
@@ -621,11 +621,11 @@ mod tests {
 
     #[test]
     fn test_color_distance() {
-        let c1 = RGBA8::RED;
-        let c2 = RGBA8::RED;
+        let c1 = Rgba8::RED;
+        let c2 = Rgba8::RED;
         assert_eq!(color_distance(c1, c2), 0.0);
 
-        let c3 = RGBA8::BLUE;
+        let c3 = Rgba8::BLUE;
         assert!(color_distance(c1, c3) > 0.0);
     }
 }

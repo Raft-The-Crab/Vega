@@ -2,11 +2,11 @@
 //!
 //! Provides efficient CPU-based compositing of pixel data with various blend modes.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::nodes::BlendMode;
 
 /// Blend operation function type.
-pub type BlendOp = fn(RGBA8, RGBA8) -> RGBA8;
+pub type BlendOp = fn(Rgba8, Rgba8) -> Rgba8;
 
 /// Compositor for blending pixel data.
 pub struct Compositor {
@@ -20,7 +20,7 @@ impl Compositor {
     }
 
     /// Composites a source pixel over a destination pixel.
-    pub fn composite(&self, dest: RGBA8, src: RGBA8) -> RGBA8 {
+    pub fn composite(&self, dest: Rgba8, src: Rgba8) -> Rgba8 {
         let blend_fn = self.blend_fn();
         let blended = blend_fn(dest, src);
         alpha_blend(dest, blended)
@@ -50,7 +50,7 @@ impl Compositor {
 }
 
 /// Blends two pixels using alpha compositing (destination over source).
-pub fn alpha_blend(dest: RGBA8, src: RGBA8) -> RGBA8 {
+pub fn alpha_blend(dest: Rgba8, src: Rgba8) -> Rgba8 {
     let src_a = src.a as f32 / 255.0;
     let dest_a = dest.a as f32 / 255.0;
 
@@ -63,13 +63,13 @@ pub fn alpha_blend(dest: RGBA8, src: RGBA8) -> RGBA8 {
 
     let out_a = src_a + dest_a * (1.0 - src_a);
     if out_a == 0.0 {
-        return RGBA8::TRANSPARENT;
+        return Rgba8::TRANSPARENT;
     }
 
     let src_weight = src_a / out_a;
     let dest_weight = dest_a * (1.0 - src_a) / out_a;
 
-    RGBA8::new(
+    Rgba8::new(
         (src.r as f32 * src_weight + dest.r as f32 * dest_weight).round() as u8,
         (src.g as f32 * src_weight + dest.g as f32 * dest_weight).round() as u8,
         (src.b as f32 * src_weight + dest.b as f32 * dest_weight).round() as u8,
@@ -78,7 +78,7 @@ pub fn alpha_blend(dest: RGBA8, src: RGBA8) -> RGBA8 {
 }
 
 /// Blends two arrays of pixels.
-pub fn blend_pixels(dest: &mut [RGBA8], src: &[RGBA8], blend_mode: BlendMode) {
+pub fn blend_pixels(dest: &mut [Rgba8], src: &[Rgba8], blend_mode: BlendMode) {
     let compositor = Compositor::new(blend_mode);
     for (d, s) in dest.iter_mut().zip(src.iter()) {
         *d = compositor.composite(*d, *s);
@@ -87,12 +87,12 @@ pub fn blend_pixels(dest: &mut [RGBA8], src: &[RGBA8], blend_mode: BlendMode) {
 
 // Blend mode implementations
 
-fn blend_normal(_dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_normal(_dest: Rgba8, src: Rgba8) -> Rgba8 {
     src
 }
 
-fn blend_multiply(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    RGBA8::new(
+fn blend_multiply(dest: Rgba8, src: Rgba8) -> Rgba8 {
+    Rgba8::new(
         (dest.r as u32 * src.r as u32 / 255) as u8,
         (dest.g as u32 * src.g as u32 / 255) as u8,
         (dest.b as u32 * src.b as u32 / 255) as u8,
@@ -100,8 +100,8 @@ fn blend_multiply(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_screen(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    RGBA8::new(
+fn blend_screen(dest: Rgba8, src: Rgba8) -> Rgba8 {
+    Rgba8::new(
         (255 - (255 - dest.r as u32) * (255 - src.r as u32) / 255) as u8,
         (255 - (255 - dest.g as u32) * (255 - src.g as u32) / 255) as u8,
         (255 - (255 - dest.b as u32) * (255 - src.b as u32) / 255) as u8,
@@ -109,7 +109,7 @@ fn blend_screen(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_overlay(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_overlay(dest: Rgba8, src: Rgba8) -> Rgba8 {
     fn overlay_channel(d: u8, s: u8) -> u8 {
         if d <= 128 {
             (2 * d as u32 * s as u32 / 255) as u8
@@ -118,7 +118,7 @@ fn blend_overlay(dest: RGBA8, src: RGBA8) -> RGBA8 {
         }
     }
 
-    RGBA8::new(
+    Rgba8::new(
         overlay_channel(dest.r, src.r),
         overlay_channel(dest.g, src.g),
         overlay_channel(dest.b, src.b),
@@ -126,8 +126,8 @@ fn blend_overlay(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_darken(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    RGBA8::new(
+fn blend_darken(dest: Rgba8, src: Rgba8) -> Rgba8 {
+    Rgba8::new(
         dest.r.min(src.r),
         dest.g.min(src.g),
         dest.b.min(src.b),
@@ -135,8 +135,8 @@ fn blend_darken(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_lighten(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    RGBA8::new(
+fn blend_lighten(dest: Rgba8, src: Rgba8) -> Rgba8 {
+    Rgba8::new(
         dest.r.max(src.r),
         dest.g.max(src.g),
         dest.b.max(src.b),
@@ -144,7 +144,7 @@ fn blend_lighten(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_color_dodge(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_color_dodge(dest: Rgba8, src: Rgba8) -> Rgba8 {
     fn dodge_channel(d: u8, s: u8) -> u8 {
         if s == 255 {
             255
@@ -154,7 +154,7 @@ fn blend_color_dodge(dest: RGBA8, src: RGBA8) -> RGBA8 {
         }
     }
 
-    RGBA8::new(
+    Rgba8::new(
         dodge_channel(dest.r, src.r),
         dodge_channel(dest.g, src.g),
         dodge_channel(dest.b, src.b),
@@ -162,7 +162,7 @@ fn blend_color_dodge(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_color_burn(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_color_burn(dest: Rgba8, src: Rgba8) -> Rgba8 {
     fn burn_channel(d: u8, s: u8) -> u8 {
         if s == 0 {
             0
@@ -172,7 +172,7 @@ fn blend_color_burn(dest: RGBA8, src: RGBA8) -> RGBA8 {
         }
     }
 
-    RGBA8::new(
+    Rgba8::new(
         burn_channel(dest.r, src.r),
         burn_channel(dest.g, src.g),
         burn_channel(dest.b, src.b),
@@ -180,11 +180,11 @@ fn blend_color_burn(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_hard_light(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_hard_light(dest: Rgba8, src: Rgba8) -> Rgba8 {
     blend_overlay(dest, src)
 }
 
-fn blend_soft_light(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_soft_light(dest: Rgba8, src: Rgba8) -> Rgba8 {
     // Simplified soft light implementation
     fn soft_light_channel(d: u8, s: u8) -> u8 {
         let d_f = d as f32 / 255.0;
@@ -198,7 +198,7 @@ fn blend_soft_light(dest: RGBA8, src: RGBA8) -> RGBA8 {
         }
     }
 
-    RGBA8::new(
+    Rgba8::new(
         soft_light_channel(dest.r, src.r),
         soft_light_channel(dest.g, src.g),
         soft_light_channel(dest.b, src.b),
@@ -206,8 +206,8 @@ fn blend_soft_light(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_difference(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    RGBA8::new(
+fn blend_difference(dest: Rgba8, src: Rgba8) -> Rgba8 {
+    Rgba8::new(
         (dest.r as i32 - src.r as i32).abs() as u8,
         (dest.g as i32 - src.g as i32).abs() as u8,
         (dest.b as i32 - src.b as i32).abs() as u8,
@@ -215,8 +215,8 @@ fn blend_difference(dest: RGBA8, src: RGBA8) -> RGBA8 {
     )
 }
 
-fn blend_exclusion(dest: RGBA8, src: RGBA8) -> RGBA8 {
-    RGBA8::new(
+fn blend_exclusion(dest: Rgba8, src: Rgba8) -> Rgba8 {
+    Rgba8::new(
         (dest.r as u32 + src.r as u32 - 2 * dest.r as u32 * src.r as u32 / 255) as u8,
         (dest.g as u32 + src.g as u32 - 2 * dest.g as u32 * src.g as u32 / 255) as u8,
         (dest.b as u32 + src.b as u32 - 2 * dest.b as u32 * src.b as u32 / 255) as u8,
@@ -226,19 +226,19 @@ fn blend_exclusion(dest: RGBA8, src: RGBA8) -> RGBA8 {
 
 // HSL-based blend modes using proper HSL conversions
 
-fn blend_hue(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_hue(dest: Rgba8, src: Rgba8) -> Rgba8 {
     crate::render::hsl::blend_hue(dest, src)
 }
 
-fn blend_saturation(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_saturation(dest: Rgba8, src: Rgba8) -> Rgba8 {
     crate::render::hsl::blend_saturation(dest, src)
 }
 
-fn blend_color(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_color(dest: Rgba8, src: Rgba8) -> Rgba8 {
     crate::render::hsl::blend_color(dest, src)
 }
 
-fn blend_luminosity(dest: RGBA8, src: RGBA8) -> RGBA8 {
+fn blend_luminosity(dest: Rgba8, src: Rgba8) -> Rgba8 {
     crate::render::hsl::blend_luminosity(dest, src)
 }
 
@@ -248,16 +248,16 @@ mod tests {
 
     #[test]
     fn test_alpha_blend() {
-        let dest = RGBA8::new(100, 150, 200, 255);
-        let src = RGBA8::new(50, 75, 100, 128);
+        let dest = Rgba8::new(100, 150, 200, 255);
+        let src = Rgba8::new(50, 75, 100, 128);
         let result = alpha_blend(dest, src);
         assert!(result.a > 128 && result.a < 255);
     }
 
     #[test]
     fn test_blend_normal() {
-        let dest = RGBA8::BLACK;
-        let src = RGBA8::WHITE;
+        let dest = Rgba8::BLACK;
+        let src = Rgba8::WHITE;
         let compositor = Compositor::new(BlendMode::Normal);
         let result = compositor.composite(dest, src);
         assert_eq!(result, src);
@@ -265,8 +265,8 @@ mod tests {
 
     #[test]
     fn test_blend_multiply() {
-        let dest = RGBA8::new(200, 200, 200, 255);
-        let src = RGBA8::new(128, 128, 128, 255);
+        let dest = Rgba8::new(200, 200, 200, 255);
+        let src = Rgba8::new(128, 128, 128, 255);
         let compositor = Compositor::new(BlendMode::Multiply);
         let result = compositor.composite(dest, src);
         assert!(result.r < 200);
@@ -274,8 +274,8 @@ mod tests {
 
     #[test]
     fn test_blend_screen() {
-        let dest = RGBA8::new(100, 100, 100, 255);
-        let src = RGBA8::new(100, 100, 100, 255);
+        let dest = Rgba8::new(100, 100, 100, 255);
+        let src = Rgba8::new(100, 100, 100, 255);
         let compositor = Compositor::new(BlendMode::Screen);
         let result = compositor.composite(dest, src);
         assert!(result.r > 100);
@@ -283,8 +283,8 @@ mod tests {
 
     #[test]
     fn test_blend_darken() {
-        let dest = RGBA8::new(200, 100, 50, 255);
-        let src = RGBA8::new(100, 150, 75, 255);
+        let dest = Rgba8::new(200, 100, 50, 255);
+        let src = Rgba8::new(100, 150, 75, 255);
         let compositor = Compositor::new(BlendMode::Darken);
         let result = compositor.composite(dest, src);
         assert_eq!(result.r, 100);
@@ -294,8 +294,8 @@ mod tests {
 
     #[test]
     fn test_blend_lighten() {
-        let dest = RGBA8::new(100, 150, 50, 255);
-        let src = RGBA8::new(200, 100, 75, 255);
+        let dest = Rgba8::new(100, 150, 50, 255);
+        let src = Rgba8::new(200, 100, 75, 255);
         let compositor = Compositor::new(BlendMode::Lighten);
         let result = compositor.composite(dest, src);
         assert_eq!(result.r, 200);
@@ -305,9 +305,9 @@ mod tests {
 
     #[test]
     fn test_blend_pixels() {
-        let mut dest = vec![RGBA8::BLACK; 4];
-        let src = vec![RGBA8::WHITE; 4];
+        let mut dest = vec![Rgba8::BLACK; 4];
+        let src = vec![Rgba8::WHITE; 4];
         blend_pixels(&mut dest, &src, BlendMode::Normal);
-        assert_eq!(dest[0], RGBA8::WHITE);
+        assert_eq!(dest[0], Rgba8::WHITE);
     }
 }

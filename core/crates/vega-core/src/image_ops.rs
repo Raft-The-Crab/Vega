@@ -2,7 +2,7 @@
 //!
 //! Provides image manipulation operations for editing with full pixel-level processing.
 
-use crate::color::types::rgba::RGBA8;
+use crate::color::types::Rgba8;
 use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType, Transform};
@@ -192,10 +192,10 @@ pub fn resize_layer(
                                         let local_y = src_y % tile_storage.tile_size();
                                         tile.get_pixel(local_x, local_y)
                                     } else {
-                                        RGBA8::TRANSPARENT
+                                        Rgba8::TRANSPARENT
                                     }
                                 } else {
-                                    RGBA8::TRANSPARENT
+                                    Rgba8::TRANSPARENT
                                 };
 
                                 new_tile.set_pixel(x, y, src_pixel);
@@ -267,10 +267,10 @@ pub fn rotate_layer_cw(
                                         let local_y = src_y % tile_storage.tile_size();
                                         tile.get_pixel(local_x, local_y)
                                     } else {
-                                        RGBA8::TRANSPARENT
+                                        Rgba8::TRANSPARENT
                                     }
                                 } else {
-                                    RGBA8::TRANSPARENT
+                                    Rgba8::TRANSPARENT
                                 };
 
                                 new_tile.set_pixel(x, y, src_pixel);
@@ -346,10 +346,10 @@ pub fn rotate_layer_ccw(
                                         let local_y = src_y % tile_storage.tile_size();
                                         tile.get_pixel(local_x, local_y)
                                     } else {
-                                        RGBA8::TRANSPARENT
+                                        Rgba8::TRANSPARENT
                                     }
                                 } else {
-                                    RGBA8::TRANSPARENT
+                                    Rgba8::TRANSPARENT
                                 };
 
                                 new_tile.set_pixel(x, y, src_pixel);
@@ -471,7 +471,7 @@ pub struct CropLayerCommand {
     layer_id: NodeId,
     params: CropParams,
     original_bounds: Option<Rect>,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
 }
 
 impl CropLayerCommand {
@@ -565,13 +565,13 @@ impl Command for CropLayerCommand {
 
 impl CropLayerCommand {
     /// Save tile data for undo.
-    fn save_tile_data(tile_storage: &TileStorage, bounds: Rect) -> Vec<(TileCoords, Vec<RGBA8>)> {
+    fn save_tile_data(tile_storage: &TileStorage, bounds: Rect) -> Vec<(TileCoords, Vec<Rgba8>)> {
         let mut data = Vec::new();
         
         for tile_coords in tile_storage.tiles_in_rect(bounds.x, bounds.y, bounds.width, bounds.height) {
             if let Some(handle) = tile_storage.get(tile_coords) {
                 if let Some(tile) = tile_storage.get_tile(handle) {
-                    let pixels: Vec<RGBA8> = (0..tile.size())
+                    let pixels: Vec<Rgba8> = (0..tile.size())
                         .flat_map(|y| (0..tile.size()).map(move |x| tile.get_pixel(x, y)))
                         .collect();
                     data.push((tile_coords, pixels));
@@ -583,7 +583,7 @@ impl CropLayerCommand {
     }
 
     /// Restore tile data from saved state.
-    fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<RGBA8>)]) -> Result<(), DocumentError> {
+    fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<Rgba8>)]) -> Result<(), DocumentError> {
         for (coords, pixels) in data {
             if let Ok(handle) = tile_storage.get_or_create(*coords) {
                 if let Some(tile) = tile_storage.get_tile_mut(handle) {
@@ -605,7 +605,7 @@ pub struct ResizeLayerCommand {
     layer_id: NodeId,
     params: ResizeParams,
     original_size: Option<Size>,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
 }
 
 impl ResizeLayerCommand {
@@ -702,12 +702,12 @@ impl Command for ResizeLayerCommand {
 
 impl ResizeLayerCommand {
     /// Save tile data for undo.
-    fn save_tile_data(tile_storage: &TileStorage, bounds: Rect) -> Vec<(TileCoords, Vec<RGBA8>)> {
+    fn save_tile_data(tile_storage: &TileStorage, bounds: Rect) -> Vec<(TileCoords, Vec<Rgba8>)> {
         CropLayerCommand::save_tile_data(tile_storage, bounds)
     }
 
     /// Restore tile data from saved state.
-    fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<RGBA8>)]) -> Result<(), DocumentError> {
+    fn restore_tile_data(tile_storage: &mut TileStorage, data: &[(TileCoords, Vec<Rgba8>)]) -> Result<(), DocumentError> {
         CropLayerCommand::restore_tile_data(tile_storage, data)
     }
 }
@@ -716,7 +716,7 @@ impl ResizeLayerCommand {
 pub struct RotateLayerCwCommand {
     layer_id: NodeId,
     original_size: Option<Size>,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
 }
 
 impl RotateLayerCwCommand {
@@ -796,7 +796,7 @@ impl Command for RotateLayerCwCommand {
 pub struct RotateLayerCcwCommand {
     layer_id: NodeId,
     original_size: Option<Size>,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
 }
 
 impl RotateLayerCcwCommand {
@@ -875,7 +875,7 @@ impl Command for RotateLayerCcwCommand {
 /// Command for flipping a layer horizontally.
 pub struct FlipLayerHorizontalCommand {
     layer_id: NodeId,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
 }
 
 impl FlipLayerHorizontalCommand {
@@ -940,7 +940,7 @@ impl Command for FlipLayerHorizontalCommand {
 /// Command for flipping a layer vertically.
 pub struct FlipLayerVerticalCommand {
     layer_id: NodeId,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<Rgba8>)>>,
 }
 
 impl FlipLayerVerticalCommand {
