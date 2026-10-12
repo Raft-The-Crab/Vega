@@ -4,10 +4,53 @@ obj/
 out/
 build/
 dist/
+target/
 *.exe
 *.dll
 *.so
 *.dylib
+*.a
+*.lib
+*.o
+*.obj
+
+# .NET
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.DotSettings.user
+
+# Rust
+Cargo.lock
+**/*.rs.bk
+.direnv/
+
+# TypeScript/Node
+node_modules/
+packages/
+*.tsbuildinfo
+.npm/
+.eslintcache
+.pnp/
+.yarn/
+.yarn-integrity
+
+# Kotlin/Android
+*.apk
+*.ap_
+*.aab
+*.dex
+local.properties
+*.iml
+.gradle/
+build/
+captures/
+.externalNativeBuild
+.cxx/
 
 # IDE
 .vs/
@@ -17,16 +60,38 @@ dist/
 *.suo
 *.userosscache
 *.sln.docstates
+.history/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
 # Logs
 *.log
 logs/
+*.log.*
 
-# Dependencies
-node_modules/
-packages/
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Documentation
+docs/_build/
+site/
+
+# Temporary
+*.tmp
+*.temp
+*.cache
