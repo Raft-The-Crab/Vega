@@ -11,7 +11,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct CacheEntry {
     /// The rendered pixel data.
-    pub data: Vec<RGBA8>,
+    pub data: Vec<Rgba8>,
     /// The document revision when this cache entry was created.
     pub revision: Revision,
     /// Whether the entry is valid.
@@ -20,7 +20,7 @@ pub struct CacheEntry {
 
 impl CacheEntry {
     /// Creates a new cache entry.
-    pub fn new(data: Vec<RGBA8>, revision: Revision) -> Self {
+    pub fn new(data: Vec<Rgba8>, revision: Revision) -> Self {
         Self {
             data,
             revision,
@@ -76,7 +76,7 @@ impl RenderCache {
     }
 
     /// Inserts a new entry into the cache.
-    pub fn insert(&mut self, node_id: NodeId, tile_x: u32, tile_y: u32, data: Vec<RGBA8>, revision: Revision) {
+    pub fn insert(&mut self, node_id: NodeId, tile_x: u32, tile_y: u32, data: Vec<Rgba8>, revision: Revision) {
         let key = (node_id, tile_x, tile_y);
 
         // Evict if at capacity
@@ -132,7 +132,7 @@ mod tests {
 
     #[test]
     fn test_cache_entry_validity() {
-        let data = vec![RGBA8::WHITE; 100];
+        let data = vec![Rgba8::WHITE; 100];
         let entry = CacheEntry::new(data.clone(), Revision::new(1));
 
         assert!(entry.is_valid_for(Revision::new(1)));
@@ -146,7 +146,7 @@ mod tests {
     fn test_render_cache() {
         let mut cache = RenderCache::new(10);
         let node_id = NodeId::generate();
-        let data = vec![RGBA8::WHITE; 100];
+        let data = vec![Rgba8::WHITE; 100];
         let revision = Revision::new(1);
 
         // Insert entry
@@ -170,7 +170,7 @@ mod tests {
     fn test_render_cache_eviction() {
         let mut cache = RenderCache::new(2);
         let node_id = NodeId::generate();
-        let data = vec![RGBA8::WHITE; 100];
+        let data = vec![Rgba8::WHITE; 100];
         let revision = Revision::new(1);
 
         // Insert 3 entries (should evict one)

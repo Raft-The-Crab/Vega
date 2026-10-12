@@ -12,10 +12,10 @@ use crate::tiles::{TileCoords, TileStorage};
 
 /// Renders a single tile to a buffer slice.
 pub fn render_tile_to_buffer(
-    tile_data: &[RGBA8],
+    tile_data: &[Rgba8],
     tile_coords: TileCoords,
     tile_size: u32,
-    buffer: &mut [RGBA8],
+    buffer: &mut [Rgba8],
     viewport: Rect,
     compositor: &Compositor,
     opacity: f32,
@@ -42,7 +42,7 @@ pub fn render_tile_to_buffer(
                 let src_pixel = tile_data[(local_y * tile_size + local_x) as usize];
 
                 let src_pixel = if opacity < 1.0 {
-                    RGBA8::new(
+                    Rgba8::new(
                         src_pixel.r,
                         src_pixel.g,
                         src_pixel.b,
@@ -64,8 +64,8 @@ pub fn render_tile_to_buffer(
 /// It's suitable for rendering independent tiles where order doesn't matter.
 #[cfg(feature = "parallel")]
 pub fn render_tiles_parallel(
-    tiles: Vec<(TileCoords, Vec<RGBA8>)>,
-    buffer: &mut [RGBA8],
+    tiles: Vec<(TileCoords, Vec<Rgba8>)>,
+    buffer: &mut [Rgba8],
     viewport: Rect,
     compositor: Compositor,
     opacity: f32,
@@ -79,7 +79,7 @@ pub fn render_tiles_parallel(
     };
 
     tiles.par_iter().for_each(|(coords, data)| {
-        let mut local_buffer = vec![RGBA8::TRANSPARENT; buffer.len()];
+        let mut local_buffer = vec![Rgba8::TRANSPARENT; buffer.len()];
         render_tile_to_buffer(
             data,
             *coords,
@@ -97,8 +97,8 @@ pub fn render_tiles_parallel(
 
 /// Sequential tile renderer for fallback when parallel rendering is not available.
 pub fn render_tiles_sequential(
-    tiles: Vec<(TileCoords, Vec<RGBA8>)>,
-    buffer: &mut [RGBA8],
+    tiles: Vec<(TileCoords, Vec<Rgba8>)>,
+    buffer: &mut [Rgba8],
     viewport: Rect,
     compositor: Compositor,
     opacity: f32,
@@ -123,31 +123,31 @@ mod tests {
 
     #[test]
     fn test_render_tile_to_buffer() {
-        let tile_data = vec![RGBA8::WHITE; 256 * 256];
+        let tile_data = vec![Rgba8::WHITE; 256 * 256];
         let coords = TileCoords::new(0, 0);
-        let mut buffer = vec![RGBA8::TRANSPARENT; 100 * 100];
+        let mut buffer = vec![Rgba8::TRANSPARENT; 100 * 100];
         let viewport = Rect::new(0, 0, 100, 100);
         let compositor = Compositor::new(crate::document::nodes::BlendMode::Normal);
 
         render_tile_to_buffer(&tile_data, coords, 256, &mut buffer, viewport, &compositor, 1.0);
 
         // Buffer should now have white pixels in the overlap region
-        assert_ne!(buffer[0], RGBA8::TRANSPARENT);
+        assert_ne!(buffer[0], Rgba8::TRANSPARENT);
     }
 
     #[test]
     fn test_render_tiles_sequential() {
         let tiles = vec![
-            (TileCoords::new(0, 0), vec![RGBA8::WHITE; 64 * 64]),
-            (TileCoords::new(1, 0), vec![RGBA8::RED; 64 * 64]),
+            (TileCoords::new(0, 0), vec![Rgba8::WHITE; 64 * 64]),
+            (TileCoords::new(1, 0), vec![Rgba8::RED; 64 * 64]),
         ];
-        let mut buffer = vec![RGBA8::TRANSPARENT; 128 * 64];
+        let mut buffer = vec![Rgba8::TRANSPARENT; 128 * 64];
         let viewport = Rect::new(0, 0, 128, 64);
         let compositor = Compositor::new(crate::document::nodes::BlendMode::Normal);
 
         render_tiles_sequential(tiles, &mut buffer, viewport, compositor, 1.0);
 
         // Buffer should have been filled
-        assert_ne!(buffer[0], RGBA8::TRANSPARENT);
+        assert_ne!(buffer[0], Rgba8::TRANSPARENT);
     }
 }

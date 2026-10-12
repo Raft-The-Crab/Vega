@@ -112,47 +112,47 @@ pub fn luminance(r: u8, g: u8, b: u8) -> f32 {
 /// HSL blend mode implementations.
 
 /// Hue blend mode: takes hue from source, saturation and luminosity from destination.
-pub fn blend_hue(dest: RGBA8, src: RGBA8) -> RGBA8 {
+pub fn blend_hue(dest: Rgba8, src: Rgba8) -> Rgba8 {
     let dest_hsl = Hsl::from_rgb(dest.r, dest.g, dest.b);
     let src_hsl = Hsl::from_rgb(src.r, src.g, src.b);
 
     let result = Hsl::new(src_hsl.h, dest_hsl.s, dest_hsl.l);
     let (r, g, b) = result.to_rgb();
 
-    RGBA8::new(r, g, b, src.a)
+    Rgba8::new(r, g, b, src.a)
 }
 
 /// Saturation blend mode: takes saturation from source, hue and luminosity from destination.
-pub fn blend_saturation(dest: RGBA8, src: RGBA8) -> RGBA8 {
+pub fn blend_saturation(dest: Rgba8, src: Rgba8) -> Rgba8 {
     let dest_hsl = Hsl::from_rgb(dest.r, dest.g, dest.b);
     let src_hsl = Hsl::from_rgb(src.r, src.g, src.b);
 
     let result = Hsl::new(dest_hsl.h, src_hsl.s, dest_hsl.l);
     let (r, g, b) = result.to_rgb();
 
-    RGBA8::new(r, g, b, src.a)
+    Rgba8::new(r, g, b, src.a)
 }
 
 /// Color blend mode: takes hue and saturation from source, luminosity from destination.
-pub fn blend_color(dest: RGBA8, src: RGBA8) -> RGBA8 {
+pub fn blend_color(dest: Rgba8, src: Rgba8) -> Rgba8 {
     let dest_hsl = Hsl::from_rgb(dest.r, dest.g, dest.b);
     let src_hsl = Hsl::from_rgb(src.r, src.g, src.b);
 
     let result = Hsl::new(src_hsl.h, src_hsl.s, dest_hsl.l);
     let (r, g, b) = result.to_rgb();
 
-    RGBA8::new(r, g, b, src.a)
+    Rgba8::new(r, g, b, src.a)
 }
 
 /// Luminosity blend mode: takes luminosity from source, hue and saturation from destination.
-pub fn blend_luminosity(dest: RGBA8, src: RGBA8) -> RGBA8 {
+pub fn blend_luminosity(dest: Rgba8, src: Rgba8) -> Rgba8 {
     let dest_hsl = Hsl::from_rgb(dest.r, dest.g, dest.b);
     let src_hsl = Hsl::from_rgb(src.r, src.g, src.b);
 
     let result = Hsl::new(dest_hsl.h, dest_hsl.s, src_hsl.l);
     let (r, g, b) = result.to_rgb();
 
-    RGBA8::new(r, g, b, src.a)
+    Rgba8::new(r, g, b, src.a)
 }
 
 #[cfg(test)]
@@ -190,8 +190,8 @@ mod tests {
 
     #[test]
     fn test_blend_hue() {
-        let dest = RGBA8::new(100, 100, 100, 255);
-        let src = RGBA8::new(255, 0, 0, 255);
+        let dest = Rgba8::new(100, 100, 100, 255);
+        let src = Rgba8::new(255, 0, 0, 255);
         let result = blend_hue(dest, src);
         // Result should have hue from red (0 degrees) but saturation/luminosity from gray
         assert!(result.r > 100); // More red due to hue
@@ -199,8 +199,8 @@ mod tests {
 
     #[test]
     fn test_blend_saturation() {
-        let dest = RGBA8::new(128, 128, 128, 255);
-        let src = RGBA8::new(255, 0, 0, 255);
+        let dest = Rgba8::new(128, 128, 128, 255);
+        let src = Rgba8::new(255, 0, 0, 255);
         let result = blend_saturation(dest, src);
         // Result should have saturation from red
         assert_ne!(result.r, result.g);

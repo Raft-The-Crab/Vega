@@ -66,7 +66,7 @@ impl TileMemoryManager {
     /// Calculates memory usage for a tile of given size.
     pub fn tile_memory_size(tile_size: u32) -> usize {
         let pixel_count = (tile_size * tile_size) as usize;
-        pixel_count * std::mem::size_of::<RGBA8>()
+        pixel_count * std::mem::size_of::<Rgba8>()
     }
 
     /// Checks if a tile can be allocated.
@@ -184,7 +184,7 @@ mod tests {
     #[test]
     fn test_tile_memory_size() {
         let size = TileMemoryManager::tile_memory_size(256);
-        assert_eq!(size, 256 * 256 * 4); // RGBA8 = 4 bytes per pixel
+        assert_eq!(size, 256 * 256 * 4); // Rgba8 = 4 bytes per pixel
     }
 
     #[test]

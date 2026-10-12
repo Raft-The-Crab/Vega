@@ -8,6 +8,7 @@ use crate::geometry::Size;
 use crate::errors::DocumentError;
 use crate::render::ViewportRenderer;
 use crate::tiles::TileStorage;
+use crate::geometry::Rect;
 use image::{ImageBuffer, Rgba, DynamicImage};
 use std::path::Path;
 
@@ -118,7 +119,7 @@ pub fn export_document(
     let height = scaled_height as u32;
 
     // Render the document using the viewport renderer
-    let mut buffer = vec![RGBA8::TRANSPARENT; (width * height) as usize];
+    let mut buffer = vec![Rgba8::TRANSPARENT; (width * height) as usize];
 
     // Use viewport renderer to render the document
     // The renderer handles layer compositing, blend modes, and adjustments

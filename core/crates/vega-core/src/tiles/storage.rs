@@ -333,10 +333,10 @@ mod tests {
 
         let handle = storage.get_or_create(coords).unwrap();
         let tile = storage.get_tile_mut(handle).unwrap();
-        tile.fill(RGBA8::RED);
+        tile.fill(Rgba8::RED);
 
         let tile = storage.get_tile(handle).unwrap();
-        assert_eq!(tile.get_pixel(0, 0), RGBA8::RED);
+        assert_eq!(tile.get_pixel(0, 0), Rgba8::RED);
     }
 
     #[test]

@@ -57,7 +57,7 @@ pub struct Tile {
     /// Size of the tile in pixels (usually power of 2).
     size: u32,
     /// Pixel data in row-major order.
-    data: Vec<RGBA8>,
+    data: Vec<Rgba8>,
     /// Whether this tile has been modified since load.
     dirty: bool,
 }
@@ -77,7 +77,7 @@ impl Tile {
         );
 
         let pixel_count = (size * size) as usize;
-        let data = vec![RGBA8::TRANSPARENT; pixel_count];
+        let data = vec![Rgba8::TRANSPARENT; pixel_count];
 
         Self {
             coords,
@@ -91,7 +91,7 @@ impl Tile {
     ///
     /// # Panics
     /// Panics if data length doesn't match size squared.
-    pub fn with_data(coords: TileCoords, size: u32, data: Vec<RGBA8>) -> Self {
+    pub fn with_data(coords: TileCoords, size: u32, data: Vec<Rgba8>) -> Self {
         let expected_len = (size * size) as usize;
         assert_eq!(
             data.len(),
@@ -136,12 +136,12 @@ impl Tile {
     }
 
     /// Returns a reference to the pixel data.
-    pub fn data(&self) -> &[RGBA8] {
+    pub fn data(&self) -> &[Rgba8] {
         &self.data
     }
 
     /// Returns a mutable reference to the pixel data.
-    pub fn data_mut(&mut self) -> &mut [RGBA8] {
+    pub fn data_mut(&mut self) -> &mut [Rgba8] {
         self.dirty = true;
         &mut self.data
     }
@@ -150,7 +150,7 @@ impl Tile {
     ///
     /// # Panics
     /// Panics if x or y are out of bounds.
-    pub fn get_pixel(&self, x: u32, y: u32) -> RGBA8 {
+    pub fn get_pixel(&self, x: u32, y: u32) -> Rgba8 {
         assert!(x < self.size && y < self.size, "Pixel coordinates out of bounds");
         let index = (y * self.size + x) as usize;
         self.data[index]
@@ -160,7 +160,7 @@ impl Tile {
     ///
     /// # Panics
     /// Panics if x or y are out of bounds.
-    pub fn set_pixel(&mut self, x: u32, y: u32, pixel: RGBA8) {
+    pub fn set_pixel(&mut self, x: u32, y: u32, pixel: Rgba8) {
         assert!(x < self.size && y < self.size, "Pixel coordinates out of bounds");
         let index = (y * self.size + x) as usize;
         self.data[index] = pixel;
@@ -168,14 +168,14 @@ impl Tile {
     }
 
     /// Fills the entire tile with a single color.
-    pub fn fill(&mut self, color: RGBA8) {
+    pub fn fill(&mut self, color: Rgba8) {
         self.data.fill(color);
         self.dirty = true;
     }
 
     /// Clears the tile to transparent.
     pub fn clear(&mut self) {
-        self.fill(RGBA8::TRANSPARENT);
+        self.fill(Rgba8::TRANSPARENT);
     }
 
     /// Creates a copy of this tile.
@@ -227,7 +227,7 @@ mod tests {
     #[test]
     fn test_tile_with_data() {
         let coords = TileCoords::new(0, 0);
-        let data = vec![RGBA8::WHITE; 64 * 64];
+        let data = vec![Rgba8::WHITE; 64 * 64];
         let tile = Tile::with_data(coords, 64, data);
         assert_eq!(tile.size(), 64);
         assert_eq!(tile.data().len(), 64 * 64);
@@ -237,14 +237,14 @@ mod tests {
     #[should_panic(expected = "Data length")]
     fn test_tile_with_data_wrong_length() {
         let coords = TileCoords::new(0, 0);
-        let data = vec![RGBA8::WHITE; 100];
+        let data = vec![Rgba8::WHITE; 100];
         Tile::with_data(coords, 64, data);
     }
 
     #[test]
     fn test_pixel_access() {
         let mut tile = Tile::new(TileCoords::new(0, 0), 64);
-        let color = RGBA8::new(255, 128, 64, 255);
+        let color = Rgba8::new(255, 128, 64, 255);
         tile.set_pixel(10, 20, color);
         assert_eq!(tile.get_pixel(10, 20), color);
     }
@@ -252,17 +252,17 @@ mod tests {
     #[test]
     fn test_fill() {
         let mut tile = Tile::new(TileCoords::new(0, 0), 64);
-        tile.fill(RGBA8::RED);
-        assert_eq!(tile.get_pixel(0, 0), RGBA8::RED);
-        assert_eq!(tile.get_pixel(63, 63), RGBA8::RED);
+        tile.fill(Rgba8::RED);
+        assert_eq!(tile.get_pixel(0, 0), Rgba8::RED);
+        assert_eq!(tile.get_pixel(63, 63), Rgba8::RED);
     }
 
     #[test]
     fn test_clear() {
         let mut tile = Tile::new(TileCoords::new(0, 0), 64);
-        tile.fill(RGBA8::RED);
+        tile.fill(Rgba8::RED);
         tile.clear();
-        assert_eq!(tile.get_pixel(0, 0), RGBA8::TRANSPARENT);
+        assert_eq!(tile.get_pixel(0, 0), Rgba8::TRANSPARENT);
     }
 
     #[test]
@@ -273,7 +273,7 @@ mod tests {
         tile.mark_clean();
         assert!(!tile.is_dirty());
 
-        tile.set_pixel(0, 0, RGBA8::WHITE);
+        tile.set_pixel(0, 0, Rgba8::WHITE);
         assert!(tile.is_dirty());
     }
 

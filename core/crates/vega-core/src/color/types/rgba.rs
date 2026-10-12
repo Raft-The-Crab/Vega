@@ -13,17 +13,17 @@ pub struct Rgba8 {
 }
 
 impl Rgba8 {
-    /// Create a new RGBA8 color.
+    /// Create a new Rgba8 color.
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
 
-    /// Create an opaque RGBA8 color.
+    /// Create an opaque Rgba8 color.
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b, a: 255 }
     }
 
-    /// Create a transparent RGBA8 color.
+    /// Create a transparent Rgba8 color.
     pub const fn transparent() -> Self {
         Self { r: 0, g: 0, b: 0, a: 0 }
     }
@@ -107,7 +107,7 @@ impl Rgba16 {
         self.a as f32 / 65535.0
     }
 
-    /// Convert from RGBA8 to RGBA16.
+    /// Convert from Rgba8 to RGBA16.
     pub fn from_rgba8(color: Rgba8) -> Self {
         Self {
             r: ((color.r as u16) << 8) | (color.r as u16),
@@ -117,7 +117,7 @@ impl Rgba16 {
         }
     }
 
-    /// Convert to RGBA8.
+    /// Convert to Rgba8.
     pub fn to_rgba8(self) -> Rgba8 {
         Rgba8 {
             r: (self.r >> 8) as u8,
@@ -192,7 +192,7 @@ impl Rgba32 {
         }
     }
 
-    /// Convert from RGBA8.
+    /// Convert from Rgba8.
     pub fn from_rgba8(color: Rgba8) -> Self {
         Self {
             r: color.r as f32 / 255.0,
@@ -202,14 +202,14 @@ impl Rgba32 {
         }
     }
 
-    /// Convert to RGBA8.
+    /// Convert to Rgba8.
     pub fn to_rgba8(self) -> Rgba8 {
-        let self = self.clamp();
+        let clamped = self.clamp();
         Rgba8 {
-            r: (self.r * 255.0).round() as u8,
-            g: (self.g * 255.0).round() as u8,
-            b: (self.b * 255.0).round() as u8,
-            a: (self.a * 255.0).round() as u8,
+            r: (clamped.r * 255.0).round() as u8,
+            g: (clamped.g * 255.0).round() as u8,
+            b: (clamped.b * 255.0).round() as u8,
+            a: (clamped.a * 255.0).round() as u8,
         }
     }
 }

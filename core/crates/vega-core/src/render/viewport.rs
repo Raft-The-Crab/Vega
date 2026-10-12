@@ -36,7 +36,7 @@ impl ViewportRenderer {
         &self,
         document: &Document,
         viewport: Rect,
-        buffer: &mut [RGBA8],
+        buffer: &mut [Rgba8],
     ) -> Result<(), DocumentError> {
         // Validate viewport bounds
         if viewport.x < 0 || viewport.y < 0 {
@@ -73,7 +73,7 @@ impl ViewportRenderer {
         }
 
         // Clear buffer to transparent
-        buffer.fill(RGBA8::TRANSPARENT);
+        buffer.fill(Rgba8::TRANSPARENT);
 
         // Render each layer from bottom to top
         for node_id in document.root_nodes() {
@@ -89,7 +89,7 @@ impl ViewportRenderer {
         document: &Document,
         node_id: NodeId,
         viewport: Rect,
-        buffer: &mut [RGBA8],
+        buffer: &mut [Rgba8],
     ) -> Result<(), DocumentError> {
         let node = document
             .get_node(node_id)
@@ -146,7 +146,7 @@ impl ViewportRenderer {
         properties: &crate::document::nodes::NodeProperties,
         bounds: &Rect,
         viewport: Rect,
-        buffer: &mut [RGBA8],
+        buffer: &mut [Rgba8],
     ) -> Result<(), DocumentError> {
         // Validate opacity
         if properties.opacity < 0.0 || properties.opacity > 1.0 {
@@ -216,7 +216,7 @@ impl ViewportRenderer {
         tile: &crate::tiles::Tile,
         tile_bounds: &Rect,
         viewport: Rect,
-        buffer: &mut [RGBA8],
+        buffer: &mut [Rgba8],
         compositor: &Compositor,
         opacity: f32,
         transform: crate::document::nodes::Transform,
@@ -250,7 +250,7 @@ impl ViewportRenderer {
 
                     // Apply opacity
                     let src_pixel = if opacity < 1.0 {
-                        RGBA8::new(
+                        Rgba8::new(
                             src_pixel.r,
                             src_pixel.g,
                             src_pixel.b,
@@ -302,7 +302,7 @@ mod tests {
         );
 
         let viewport = Rect::new(0, 0, 100, 100);
-        let mut buffer = vec![RGBA8::TRANSPARENT; 50]; // Wrong size
+        let mut buffer = vec![Rgba8::TRANSPARENT; 50]; // Wrong size
 
         let result = renderer.render_viewport(&document, viewport, &mut buffer);
         assert!(result.is_err());
@@ -319,11 +319,11 @@ mod tests {
         );
 
         let viewport = Rect::new(0, 0, 100, 100);
-        let mut buffer = vec![RGBA8::TRANSPARENT; 100 * 100];
+        let mut buffer = vec![Rgba8::TRANSPARENT; 100 * 100];
 
         renderer.render_viewport(&document, viewport, &mut buffer).unwrap();
         // Should be all transparent since document has no layers
-        assert!(buffer.iter().all(|&p| p == RGBA8::TRANSPARENT));
+        assert!(buffer.iter().all(|&p| p == Rgba8::TRANSPARENT));
     }
 
     #[test]
@@ -337,7 +337,7 @@ mod tests {
         );
 
         let viewport = Rect::new(-10, 0, 100, 100); // Negative x
-        let mut buffer = vec![RGBA8::TRANSPARENT; 100 * 100];
+        let mut buffer = vec![Rgba8::TRANSPARENT; 100 * 100];
 
         let result = renderer.render_viewport(&document, viewport, &mut buffer);
         assert!(result.is_err());
@@ -354,7 +354,7 @@ mod tests {
         );
 
         let viewport = Rect::new(0, 0, 0, 100); // Zero width
-        let mut buffer = vec![RGBA8::TRANSPARENT; 0];
+        let mut buffer = vec![Rgba8::TRANSPARENT; 0];
 
         let result = renderer.render_viewport(&document, viewport, &mut buffer);
         assert!(result.is_err());
