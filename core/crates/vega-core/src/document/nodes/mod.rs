@@ -182,6 +182,54 @@ pub enum Node {
 }
 
 impl Node {
+    /// Create a new node with the given name and type.
+    pub fn new(name: String, node_type: NodeType) -> Self {
+        let id = NodeId::generate();
+        let properties = NodeProperties::new(id, node_type, name);
+
+        match node_type {
+            NodeType::Raster => Node::Raster {
+                properties,
+                bounds: Rect::default(),
+                color_space: ColorSpace::default(),
+            },
+            NodeType::Group => Node::Group {
+                properties,
+                children: Vec::new(),
+            },
+            NodeType::Adjustment => Node::Adjustment {
+                properties,
+                adjustment_type: AdjustmentType::BrightnessContrast,
+                parameters: HashMap::new(),
+            },
+            NodeType::Text => Node::Text {
+                properties,
+                text: String::new(),
+                font_family: "Arial".to_string(),
+                font_size: 12.0,
+                color: crate::color::Rgba8::BLACK,
+            },
+            NodeType::Shape => Node::Shape {
+                properties,
+                shape_type: ShapeType::Rectangle,
+                fill: Some(crate::color::Rgba8::WHITE),
+                stroke: None,
+                stroke_width: 1.0,
+            },
+            NodeType::Mask => Node::Mask {
+                properties,
+                mask_data: MaskData::Raster {
+                    bounds: Rect::default(),
+                },
+            },
+            NodeType::Asset => Node::Asset {
+                properties,
+                asset_id: String::new(),
+                linked: false,
+            },
+        }
+    }
+
     /// Get the node's properties.
     pub fn properties(&self) -> &NodeProperties {
         match self {
@@ -216,6 +264,16 @@ impl Node {
     /// Get the node's type.
     pub fn node_type(&self) -> NodeType {
         self.properties().node_type
+    }
+
+    /// Get the node's name.
+    pub fn name(&self) -> &str {
+        &self.properties().name
+    }
+
+    /// Set the node's name.
+    pub fn set_name(&mut self, name: String) {
+        self.properties_mut().name = name;
     }
 }
 

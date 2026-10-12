@@ -1,4 +1,7 @@
 //! The document model.
+//!
+//! Provides the core document structure for VEGA, including node management,
+//! metadata tracking, and revision tracking for change detection.
 
 use crate::color::ColorSpace;
 use crate::document::ids::{DocumentId, NodeId};
@@ -18,6 +21,28 @@ impl From<LimitError> for DocumentError {
 }
 
 /// A VEGA document.
+///
+/// The document is the top-level container for all image data in VEGA. It contains:
+/// - A graph of nodes (layers, groups, adjustments, etc.)
+/// - Canvas dimensions and color space
+/// - Metadata (creation time, author, custom fields)
+/// - Revision tracking for change detection
+///
+/// # Thread Safety
+/// Documents are not thread-safe for concurrent mutation. For concurrent access,
+/// wrap the document in a Mutex or RwLock.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// use vega_core::{Document, Size, ColorSpace};
+///
+/// let document = Document::new(
+///     "My Image".to_string(),
+///     Size::new(1920, 1080),
+///     ColorSpace::default(),
+/// );
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
     /// Unique document ID.
@@ -145,7 +170,7 @@ impl Document {
         Ok(id)
     }
 
-    /// Add a node as a child of a group.
+    /// Add a node as a child of a group by ID.
     pub fn add_child(&mut self, parent_id: NodeId, child_id: NodeId) -> Result<()> {
         // Verify both nodes exist
         if !self.nodes.contains_key(&parent_id) {
@@ -181,6 +206,42 @@ impl Document {
         self.touch_metadata();
         self.increment_revision();
         Ok(())
+    }
+
+    /// Add a node as a child of a group.
+    pub fn add_child_node(&mut self, parent_id: NodeId, mut node: Node) -> Result<NodeId> {
+        let id = node.id();
+
+        // Validate node count before adding
+        validate_node_count(self.nodes.len() + 1)?;
+
+        // Verify parent exists and is a group
+        if !self.nodes.contains_key(&parent_id) {
+            return Err(DocumentError::LayerNotFound(format!("{}", parent_id)).into());
+        }
+
+        let parent = self.nodes.get(&parent_id).unwrap();
+        match parent {
+            Node::Group { .. } => {}
+            _ => {
+                return Err(DocumentError::InvalidLayerOperation(
+                    "Parent must be a group".to_string(),
+                )
+                .into());
+            }
+        }
+
+        self.nodes.insert(id, node);
+
+        // Add to parent's children
+        if let Some(Node::Group { children, .. }) = self.nodes.get_mut(&parent_id) {
+            children.push(id);
+        }
+
+        self.touch_metadata();
+        self.increment_revision();
+
+        Ok(id)
     }
 
     /// Remove a node from the document.
@@ -239,6 +300,63 @@ impl Document {
     /// Get the number of nodes in the document.
     pub fn node_count(&self) -> usize {
         self.nodes.len()
+    }
+
+    /// Get the parent ID of a node, if it has one.
+    pub fn get_parent(&self, node_id: NodeId) -> Option<NodeId> {
+        // Check if it's a root node
+        if self.root_nodes.contains(&node_id) {
+            return None;
+        }
+
+        // Search through all groups
+        for (id, node) in &self.nodes {
+            if let Node::Group { children, .. } = node {
+                if children.contains(&node_id) {
+                    return Some(*id);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Get the children of a node.
+    pub fn get_children(&self, node_id: NodeId) -> Result<Vec<NodeId>> {
+        if let Some(Node::Group { children, .. }) = self.nodes.get(&node_id) {
+            Ok(children.clone())
+        } else {
+            Err(DocumentError::InvalidLayerOperation(
+                "Node is not a group".to_string(),
+            )
+            .into())
+        }
+    }
+
+    /// Reorder a child within its parent's children list.
+    pub fn reorder_child(&mut self, parent_id: NodeId, child_id: NodeId, new_index: usize) -> Result<()> {
+        if let Some(Node::Group { children, .. }) = self.nodes.get_mut(&parent_id) {
+            let old_index = children
+                .iter()
+                .position(|&id| id == child_id)
+                .ok_or(DocumentError::NodeNotFound(child_id))?;
+
+            // Remove from old position
+            children.remove(old_index);
+
+            // Insert at new position (clamp to valid range)
+            let new_index = new_index.min(children.len());
+            children.insert(new_index, child_id);
+
+            self.touch_metadata();
+            self.increment_revision();
+            Ok(())
+        } else {
+            Err(DocumentError::InvalidLayerOperation(
+                "Parent is not a group".to_string(),
+            )
+            .into())
+        }
     }
 }
 

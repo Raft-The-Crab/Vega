@@ -28,6 +28,18 @@ impl Rgba8 {
         Self { r: 0, g: 0, b: 0, a: 0 }
     }
 
+    /// Black color constant.
+    pub const BLACK: Self = Self { r: 0, g: 0, b: 0, a: 255 };
+
+    /// White color constant.
+    pub const WHITE: Self = Self { r: 255, g: 255, b: 255, a: 255 };
+
+    /// Red color constant.
+    pub const RED: Self = Self { r: 255, g: 0, b: 0, a: 255 };
+
+    /// Transparent color constant.
+    pub const TRANSPARENT: Self = Self { r: 0, g: 0, b: 0, a: 0 };
+
     /// Get the alpha value as a float in [0.0, 1.0].
     pub fn alpha_f32(self) -> f32 {
         self.a as f32 / 255.0

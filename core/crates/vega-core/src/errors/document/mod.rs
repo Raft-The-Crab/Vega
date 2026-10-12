@@ -36,4 +36,24 @@ pub enum DocumentError {
     /// Resource limit error.
     #[error("resource limit: {0}")]
     ResourceLimit(String),
+
+    /// Invalid parameter value.
+    #[error("invalid parameter: {0}")]
+    InvalidParameter(String),
+
+    /// Node not found.
+    #[error("node not found: {0}")]
+    NodeNotFound(crate::document::ids::structure::NodeId),
+
+    /// Invalid operation for current state.
+    #[error("invalid operation: {0}")]
+    InvalidOperation(String),
+
+    /// Tile operation error.
+    #[error("tile error: {0}")]
+    TileError(String),
+
+    /// Rendering error.
+    #[error("rendering error: {0}")]
+    RenderError(String),
 }

@@ -6,8 +6,8 @@ pub mod nodes;
 pub mod revision;
 pub mod validation;
 
-pub use ids::{CommandId, DocumentId, LayerId, NodeId};
-pub use model::{Document, DocumentMetadata};
+pub use ids::structure::{CommandId, DocumentId, LayerId, NodeId};
+pub use model::document::{Document, DocumentMetadata};
 pub use nodes::{
     AdjustmentType, BlendMode, MaskData, Node, NodeProperties, NodeType, ShapeType, Transform,
 };

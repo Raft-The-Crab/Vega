@@ -1,4 +1,8 @@
 //! Base command types and execution.
+//!
+//! Provides the command abstraction for implementing undoable operations
+//! on documents. All modifications to documents should go through commands
+//! to ensure proper history tracking and undo/redo support.
 
 use crate::document::ids::CommandId;
 use crate::document::Document;
@@ -6,17 +10,66 @@ use crate::errors::{DocumentError, Result};
 use std::fmt;
 
 /// A command that can be applied to a document.
+///
+/// Commands encapsulate a single undoable operation on a document. Implementations
+/// must provide execute, undo, and redo methods to support the full command lifecycle.
+///
+/// # Thread Safety
+/// Commands must be Send + Sync to allow for concurrent command execution scenarios.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// use vega_core::{Command, Document, errors::Result};
+///
+/// struct MyCommand {
+///     // Command state
+/// }
+///
+/// impl Command for MyCommand {
+///     fn execute(&mut self, document: &mut Document) -> Result<()> {
+///         // Apply changes
+///         Ok(())
+///     }
+///
+///     fn undo(&mut self, document: &mut Document) -> Result<()> {
+///         // Revert changes
+///         Ok(())
+///     }
+///
+///     fn redo(&mut self, document: &mut Document) -> Result<()> {
+///         self.execute(document)
+///     }
+///
+///     fn description(&self) -> String {
+///         "My operation".to_string()
+///     }
+/// }
+/// ```
 pub trait Command: fmt::Debug + Send + Sync {
     /// Execute the command on the document.
+    ///
+    /// This method should apply the command's changes to the document and
+    /// return an error if the operation cannot be completed.
     fn execute(&mut self, document: &mut Document) -> Result<()>;
 
     /// Undo the command, reverting the document to its previous state.
+    ///
+    /// This method should restore the document to the state it was in before
+    /// execute() was called.
     fn undo(&mut self, document: &mut Document) -> Result<()>;
 
     /// Redo the command, reapplying it after an undo.
-    fn redo(&mut self, document: &mut Document) -> Result<()>;
+    ///
+    /// The default implementation simply calls execute(), but commands can
+    /// override this for optimization.
+    fn redo(&mut self, document: &mut Document) -> Result<()> {
+        self.execute(document)
+    }
 
     /// Get a description of what this command does.
+    ///
+    /// This is used for UI display and logging.
     fn description(&self) -> String;
 
     /// Get the command ID.
@@ -108,6 +161,28 @@ impl Command for Transaction {
 }
 
 /// Executor for commands on a document.
+///
+/// The CommandExecutor manages command history and provides undo/redo functionality.
+/// It maintains a bounded history of executed commands and tracks the current position
+/// for undo/redo operations.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// use vega_core::{CommandExecutor, Document, commands::Command};
+///
+/// let mut executor = CommandExecutor::new(100);
+/// let mut document = Document::default();
+///
+/// // Execute a command
+/// executor.execute(&mut document, Box::new(my_command))?;
+///
+/// // Undo
+/// executor.undo(&mut document)?;
+///
+/// // Redo
+/// executor.redo(&mut document)?;
+/// ```
 pub struct CommandExecutor {
     /// History of executed commands.
     history: Vec<Box<dyn Command>>,
