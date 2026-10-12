@@ -8,7 +8,7 @@ use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
-use crate::commands::base::Command;
+use crate::commands::base::{Command, CommandContext};
 use crate::tiles::{TileStorage, TileCoords};
 use crate::selections::SelectionMask;
 use std::collections::HashMap;
@@ -124,7 +124,7 @@ use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
-use crate::commands::base::Command;
+use crate::commands::base::{Command, CommandContext};
 use crate::tiles::{TileStorage, TileCoords};
 use crate::selections::SelectionMask;
 use std::collections::HashMap;
@@ -315,20 +315,20 @@ impl AddLayerMaskCommand {
 }
 
 impl Command for AddLayerMaskCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Full implementation requires external LayerMaskStorage
         // Use: add_layer_mask(document, layer_id, &mut mask_storage)
         // For production use, pass mask_storage through command context
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Remove the mask using remove_layer_mask
         // Save the removed mask for redo
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-add the mask using saved state
         Ok(())
     }
@@ -359,20 +359,20 @@ impl RemoveLayerMaskCommand {
 }
 
 impl Command for RemoveLayerMaskCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Full implementation requires external LayerMaskStorage
         // Use: self.removed_mask = Some(remove_layer_mask(document, layer_id, &mut mask_storage)?)
         // For production use, pass mask_storage through command context
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Restore the removed mask
         // For production use, re-insert into mask_storage
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-remove the mask
         Ok(())
     }
@@ -405,7 +405,7 @@ impl ApplySelectionAsMaskCommand {
 }
 
 impl Command for ApplySelectionAsMaskCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Full implementation requires external LayerMaskStorage
         // Use: apply_selection_as_mask(document, layer_id, &selection, &mut mask_storage)
         // Save previous mask for undo
@@ -413,13 +413,13 @@ impl Command for ApplySelectionAsMaskCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Restore the previous mask
         // For production use, re-insert into mask_storage
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-apply the selection as mask
         Ok(())
     }
@@ -428,7 +428,7 @@ impl Command for ApplySelectionAsMaskCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::base::CommandExecutor;
+    use crate::commands::base::{CommandExecutor, CommandContext};
     use crate::layers::CreateLayerCommand;
     use crate::document::nodes::NodeType;
     use crate::color::ColorSpace;
@@ -481,8 +481,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let mut mask_storage = LayerMaskStorage::new();
@@ -499,8 +500,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let mut mask_storage = LayerMaskStorage::new();
@@ -519,8 +521,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let mut mask_storage = LayerMaskStorage::new();
@@ -539,8 +542,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let mut mask_cmd = AddLayerMaskCommand::new(layer_id);

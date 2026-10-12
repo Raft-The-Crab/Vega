@@ -8,7 +8,7 @@ use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
-use crate::commands::base::Command;
+use crate::commands::base::{Command, CommandContext};
 use crate::tiles::{TileStorage, TileCoords, TileHandle};
 
 /// Brush tool parameters.
@@ -377,7 +377,7 @@ impl BrushCommand {
 }
 
 impl Command for BrushCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Full implementation requires external tile storage
         // The paint_brush function handles actual pixel processing
         // This command serves as the undo/redo wrapper
@@ -385,12 +385,12 @@ impl Command for BrushCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Restore saved tile state from modified_tiles
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-apply brush using saved params
         Ok(())
     }
@@ -420,7 +420,7 @@ impl EraserCommand {
 }
 
 impl Command for EraserCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Full implementation requires external tile storage
         // The paint_eraser function handles actual pixel processing
         // This command serves as the undo/redo wrapper
@@ -428,12 +428,12 @@ impl Command for EraserCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Restore saved tile state from modified_tiles
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-apply eraser using saved params
         Ok(())
     }
@@ -442,7 +442,7 @@ impl Command for EraserCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::base::CommandExecutor;
+    use crate::commands::base::{CommandExecutor, CommandContext};
     use crate::layers::CreateLayerCommand;
     use crate::document::nodes::NodeType;
     use crate::color::ColorSpace;
@@ -456,8 +456,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = BrushParams {
@@ -481,8 +482,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = EraserParams {
@@ -505,8 +507,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = BrushParams {
@@ -530,8 +533,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = BrushParams {

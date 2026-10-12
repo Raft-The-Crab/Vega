@@ -8,7 +8,7 @@ use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
-use crate::commands::base::Command;
+use crate::commands::base::{Command, CommandContext};
 use crate::tiles::{TileStorage, TileCoords};
 
 /// Selection operation mode.
@@ -443,7 +443,7 @@ impl RectangularSelectionCommand {
 }
 
 impl Command for RectangularSelectionCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Full implementation requires external selection storage
         // The create_rectangular_selection function handles mask creation
         // This command serves as the undo/redo wrapper
@@ -451,12 +451,12 @@ impl Command for RectangularSelectionCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Restore previous selection mask
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         // Re-apply selection using saved params
         Ok(())
     }

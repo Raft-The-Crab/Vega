@@ -3,7 +3,7 @@
 //! Tests end-to-end workflows combining document management, tiles, layers, and rendering.
 
 use crate::color::ColorSpace;
-use crate::commands::base::CommandExecutor;
+use crate::commands::base::{CommandExecutor, CommandContext};
 use crate::document::model::document::Document;
 use crate::document::nodes::NodeType;
 use crate::geometry::{Point, Rect, Size};
@@ -31,10 +31,11 @@ mod tests {
 
         // Create command executor
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
 
         // Add a layer using command
         let mut create_cmd = CreateLayerCommand::new(None, "Background".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut create_cmd).unwrap();
+        executor.execute(&mut document, &mut create_cmd, &mut context).unwrap();
         assert!(create_cmd.layer_id().is_some());
 
         // Verify layer was added
@@ -42,11 +43,11 @@ mod tests {
         assert!(document.get_node(layer_id).is_some());
 
         // Undo the command
-        executor.undo(&mut document).unwrap();
+        executor.undo(&mut document, &mut context).unwrap();
         assert!(document.get_node(layer_id).is_none());
 
         // Redo the command
-        executor.redo(&mut document).unwrap();
+        executor.redo(&mut document, &mut context).unwrap();
         assert!(document.get_node(layer_id).is_some());
 
         // Create viewport renderer
@@ -70,31 +71,32 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
 
         // Create multiple layers
         let mut cmd1 = CreateLayerCommand::new(None, "Layer 1".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd1).unwrap();
+        executor.execute(&mut document, &mut cmd1, &mut context).unwrap();
 
         let mut cmd2 = CreateLayerCommand::new(None, "Layer 2".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd2).unwrap();
+        executor.execute(&mut document, &mut cmd2, &mut context).unwrap();
 
         let mut cmd3 = CreateLayerCommand::new(None, "Layer 3".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd3).unwrap();
+        executor.execute(&mut document, &mut cmd3, &mut context).unwrap();
 
         // Verify all layers exist
         assert_eq!(document.node_count(), 3);
 
         // Undo one layer
-        executor.undo(&mut document).unwrap();
+        executor.undo(&mut document, &mut context).unwrap();
         assert_eq!(document.node_count(), 2);
 
         // Undo another
-        executor.undo(&mut document).unwrap();
+        executor.undo(&mut document, &mut context).unwrap();
         assert_eq!(document.node_count(), 1);
 
         // Redo both
-        executor.redo(&mut document).unwrap();
-        executor.redo(&mut document).unwrap();
+        executor.redo(&mut document, &mut context).unwrap();
+        executor.redo(&mut document, &mut context).unwrap();
         assert_eq!(document.node_count(), 3);
     }
 
@@ -145,8 +147,9 @@ mod tests {
 
         // Modify document
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Test".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         // Revision should have incremented
         assert!(document.revision() > initial_revision);
@@ -157,7 +160,7 @@ mod tests {
 
         // Modify again
         let mut cmd2 = CreateLayerCommand::new(None, "Test 2".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd2).unwrap();
+        executor.execute(&mut document, &mut cmd2, &mut context).unwrap();
 
         // Guard should now be invalid
         assert!(!guard.is_valid());
@@ -235,13 +238,14 @@ mod tests {
             ColorSpace::default(),
         );
 
-        let mut executor = CommandExecutor::new(0); // No history
+        let mut executor = CommandExecutor::new(0);
+        let mut context = CommandContext::new(); // No history
 
         let mut cmd = CreateLayerCommand::new(None, "Test".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         // Should not be able to undo with zero history
-        let result = executor.undo(&mut document);
+        let result = executor.undo(&mut document, &mut context);
         assert!(result.is_err());
     }
 
@@ -254,12 +258,13 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
 
         let mut cmd1 = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd1).unwrap();
+        executor.execute(&mut document, &mut cmd1, &mut context).unwrap();
 
         let mut cmd2 = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd2).unwrap();
+        executor.execute(&mut document, &mut cmd2, &mut context).unwrap();
 
         // Both should exist despite same name
         assert_eq!(document.node_count(), 2);
@@ -312,8 +317,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Test".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         if let Some(node) = document.get_node_mut(layer_id) {
@@ -336,6 +342,7 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
 
         // Try to create more nodes than allowed
         for i in 0..10001 {
@@ -345,10 +352,10 @@ mod tests {
                 NodeType::Raster,
             );
             if i < 10000 {
-                executor.execute(&mut document, &mut cmd).unwrap();
+                executor.execute(&mut document, &mut cmd, &mut context).unwrap();
             } else {
                 // Should fail at 10001
-                let result = executor.execute(&mut document, &mut cmd);
+                let result = executor.execute(&mut document, &mut cmd, &mut context);
                 assert!(result.is_err());
             }
         }
@@ -363,17 +370,18 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
 
         // Name at limit
         let long_name = "A".repeat(256);
         let mut cmd = CreateLayerCommand::new(None, long_name, NodeType::Raster);
-        let result = executor.execute(&mut document, &mut cmd);
+        let result = executor.execute(&mut document, &mut cmd, &mut context);
         assert!(result.is_ok());
 
         // Name over limit
         let too_long_name = "A".repeat(257);
         let mut cmd = CreateLayerCommand::new(None, too_long_name, NodeType::Raster);
-        let result = executor.execute(&mut document, &mut cmd);
+        let result = executor.execute(&mut document, &mut cmd, &mut context);
         assert!(result.is_err());
     }
 }

@@ -8,7 +8,7 @@ use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType, Transform};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
-use crate::commands::base::Command;
+use crate::commands::base::{Command, CommandContext};
 use crate::tiles::{TileStorage, TileCoords, TileHandle};
 
 /// Crop operation parameters.
@@ -493,7 +493,7 @@ impl CropLayerCommand {
 }
 
 impl Command for CropLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -505,7 +505,7 @@ impl Command for CropLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(original_bounds) = self.original_bounds {
             let node = document.get_node_mut(self.layer_id)
                 .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
@@ -518,7 +518,7 @@ impl Command for CropLayerCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node_mut(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -557,7 +557,7 @@ impl ResizeLayerCommand {
 }
 
 impl Command for ResizeLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -570,7 +570,7 @@ impl Command for ResizeLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(original_size) = self.original_size {
             let node = document.get_node_mut(self.layer_id)
                 .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
@@ -584,7 +584,7 @@ impl Command for ResizeLayerCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node_mut(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -600,7 +600,7 @@ impl Command for ResizeLayerCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::base::CommandExecutor;
+    use crate::commands::base::{CommandExecutor, CommandContext};
     use crate::layers::CreateLayerCommand;
     use crate::document::nodes::NodeType;
     use crate::color::ColorSpace;
@@ -624,8 +624,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = CropParams {
@@ -645,8 +646,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = ResizeParams {
@@ -668,8 +670,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let result = rotate_layer_cw(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap());
@@ -685,8 +688,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let result = rotate_layer_ccw(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap());
@@ -702,8 +706,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let result = flip_layer_horizontal(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap());
@@ -719,8 +724,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let result = flip_layer_vertical(&mut document, layer_id, &mut TileStorage::new(100, 100, 64).unwrap());
@@ -736,8 +742,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = CropParams {
@@ -745,9 +752,9 @@ mod tests {
         };
 
         let mut crop_cmd = CropLayerCommand::new(layer_id, params);
-        executor.execute(&mut document, &mut crop_cmd).unwrap();
-        executor.undo(&mut document).unwrap();
-        executor.redo(&mut document).unwrap();
+        executor.execute(&mut document, &mut crop_cmd, &mut context).unwrap();
+        executor.undo(&mut document, &mut context).unwrap();
+        executor.redo(&mut document, &mut context).unwrap();
     }
 
     #[test]
@@ -759,8 +766,9 @@ mod tests {
         );
 
         let mut executor = CommandExecutor::new(100);
+        let mut context = CommandContext::new();
         let mut cmd = CreateLayerCommand::new(None, "Layer".to_string(), NodeType::Raster);
-        executor.execute(&mut document, &mut cmd).unwrap();
+        executor.execute(&mut document, &mut cmd, &mut context).unwrap();
 
         let layer_id = cmd.layer_id().unwrap();
         let params = ResizeParams {
@@ -770,8 +778,8 @@ mod tests {
         };
 
         let mut resize_cmd = ResizeLayerCommand::new(layer_id, params);
-        executor.execute(&mut document, &mut resize_cmd).unwrap();
-        executor.undo(&mut document).unwrap();
-        executor.redo(&mut document).unwrap();
+        executor.execute(&mut document, &mut resize_cmd, &mut context).unwrap();
+        executor.undo(&mut document, &mut context).unwrap();
+        executor.redo(&mut document, &mut context).unwrap();
     }
 }

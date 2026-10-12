@@ -2,7 +2,7 @@
 //!
 //! Provides undoable operations for creating, deleting, moving, and transforming layers.
 
-use crate::commands::base::Command;
+use crate::commands::base::{Command, CommandContext};
 use crate::document::model::document::Document;
 use crate::document::nodes::Node;
 use crate::document::ids::structure::NodeId;
@@ -37,7 +37,7 @@ impl CreateLayerCommand {
 }
 
 impl Command for CreateLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = Node::new(self.name.clone(), self.node_type.clone());
         let id = node.id();
         self.layer_id = Some(id);
@@ -51,15 +51,15 @@ impl Command for CreateLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(layer_id) = self.layer_id {
             document.remove_node(layer_id)?;
         }
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
@@ -82,7 +82,7 @@ impl DeleteLayerCommand {
 }
 
 impl Command for DeleteLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node(self.layer_id).ok_or(DocumentError::NodeNotFound(
             self.layer_id,
         ))?;
@@ -93,7 +93,7 @@ impl Command for DeleteLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(node) = self.removed_node.take() {
             if let Some(parent_id) = self.parent_id {
                 document.add_child(parent_id, node)?;
@@ -104,8 +104,8 @@ impl Command for DeleteLayerCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
@@ -128,7 +128,7 @@ impl MoveLayerCommand {
 }
 
 impl Command for MoveLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         self.old_parent_id = document.get_parent(self.layer_id);
 
         let node = document.remove_node(self.layer_id)?;
@@ -141,7 +141,7 @@ impl Command for MoveLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.remove_node(self.layer_id)?;
         if let Some(parent_id) = self.old_parent_id {
             document.add_child_node(parent_id, node)?;
@@ -151,8 +151,8 @@ impl Command for MoveLayerCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
@@ -175,7 +175,7 @@ impl ReorderLayerCommand {
 }
 
 impl Command for ReorderLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let parent_id = document
             .get_parent(self.layer_id)
             .ok_or(DocumentError::NodeNotFound(self.layer_id))?;
@@ -193,7 +193,7 @@ impl Command for ReorderLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(old_index) = self.old_index {
             let parent_id = document
                 .get_parent(self.layer_id)
@@ -204,8 +204,8 @@ impl Command for ReorderLayerCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
@@ -228,7 +228,7 @@ impl TransformLayerCommand {
 }
 
 impl Command for TransformLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node_mut(self.layer_id).ok_or(DocumentError::NodeNotFound(
             self.layer_id,
         ))?;
@@ -239,7 +239,7 @@ impl Command for TransformLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(old_transform) = self.old_transform.take() {
             let node = document.get_node_mut(self.layer_id).ok_or(DocumentError::NodeNotFound(
                 self.layer_id,
@@ -249,8 +249,8 @@ impl Command for TransformLayerCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
@@ -278,7 +278,7 @@ impl DuplicateLayerCommand {
 }
 
 impl Command for DuplicateLayerCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let node = document.get_node(self.layer_id).ok_or(DocumentError::NodeNotFound(
             self.layer_id,
         ))?;
@@ -300,15 +300,15 @@ impl Command for DuplicateLayerCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let Some(duplicate_id) = self.duplicate_id {
             document.remove_node(duplicate_id)?;
         }
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
@@ -333,7 +333,7 @@ impl MergeDownCommand {
 }
 
 impl Command for MergeDownCommand {
-    fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn execute(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         let parent_id = document
             .get_parent(self.layer_id)
             .ok_or(DocumentError::NodeNotFound(self.layer_id))?;
@@ -370,7 +370,7 @@ impl Command for MergeDownCommand {
         Ok(())
     }
 
-    fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
+    fn undo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
         if let (Some(parent_id), Some(below_id), Some(merged_node)) =
             (self.parent_id, self.below_id, self.merged_node.take())
         {
@@ -394,25 +394,26 @@ impl Command for MergeDownCommand {
         Ok(())
     }
 
-    fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        self.execute(document)
+    fn redo(&mut self, document: &mut Document, _context: &mut CommandContext) -> Result<(), DocumentError> {
+        self.execute(document, _context)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::document::nodes::mod_rs::NodeType;
+    use crate::document::nodes::NodeType;
+        use crate::commands::base::CommandContext;
 
     #[test]
     fn test_create_layer_command() {
         let mut document = Document::new("Test".to_string(), crate::geometry::Size::new(1920, 1080), crate::color::ColorSpace::default());
         let command = CreateLayerCommand::new(None, "Test Layer".to_string(), NodeType::Raster);
 
-        command.execute(&mut document).unwrap();
+        command.execute(&mut document, &mut CommandContext::new()).unwrap();
         assert!(command.layer_id().is_some());
 
-        command.undo(&mut document).unwrap();
+        command.undo(&mut document, &mut CommandContext::new()).unwrap();
         assert!(document.get_node(command.layer_id().unwrap()).is_none());
     }
 
@@ -424,10 +425,10 @@ mod tests {
         document.add_node(node).unwrap();
 
         let command = DeleteLayerCommand::new(layer_id);
-        command.execute(&mut document).unwrap();
+        command.execute(&mut document, &mut CommandContext::new()).unwrap();
         assert!(document.get_node(layer_id).is_none());
 
-        command.undo(&mut document).unwrap();
+        command.undo(&mut document, &mut CommandContext::new()).unwrap();
         assert!(document.get_node(layer_id).is_some());
     }
 
@@ -443,10 +444,10 @@ mod tests {
         document.add_node(layer).unwrap();
 
         let command = MoveLayerCommand::new(layer_id, Some(group_id));
-        command.execute(&mut document).unwrap();
+        command.execute(&mut document, &mut CommandContext::new()).unwrap();
         assert_eq!(document.get_parent(layer_id), Some(group_id));
 
-        command.undo(&mut document).unwrap();
+        command.undo(&mut document, &mut CommandContext::new()).unwrap();
         assert_eq!(document.get_parent(layer_id), None);
     }
 }
