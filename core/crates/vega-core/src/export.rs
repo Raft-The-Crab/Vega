@@ -92,19 +92,41 @@ pub fn export_document(
         ));
     }
 
-    // Render the document
-    let width = (document.canvas_size().width as f32 * params.scale) as u32;
-    let height = (document.canvas_size().height as f32 * params.scale) as u32;
+    // Validate output dimensions to prevent overflow
+    let canvas_size = document.canvas_size();
+    let scaled_width = (canvas_size.width as f64 * params.scale as f64) as u64;
+    let scaled_height = (canvas_size.height as f64 * params.scale as f64) as u64;
 
+    // Prevent overflow and unreasonable dimensions
+    const MAX_EXPORT_DIMENSION: u64 = 65536;
+    if scaled_width > MAX_EXPORT_DIMENSION || scaled_height > MAX_EXPORT_DIMENSION {
+        return Err(DocumentError::InvalidParameter(
+            format!("Export dimensions too large: {}x{}", scaled_width, scaled_height)
+        ));
+    }
+
+    // Prevent excessive memory allocation
+    const MAX_EXPORT_PIXELS: u64 = 1_073_741_824; // 1GB at 4 bytes per pixel
+    let total_pixels = scaled_width * scaled_height;
+    if total_pixels > MAX_EXPORT_PIXELS {
+        return Err(DocumentError::InvalidParameter(
+            format!("Export requires too much memory: {} pixels", total_pixels)
+        ));
+    }
+
+    let width = scaled_width as u32;
+    let height = scaled_height as u32;
+
+    // Render the document using the viewport renderer
     let mut buffer = vec![RGBA8::TRANSPARENT; (width * height) as usize];
 
-    // Render to buffer (simplified - full implementation would use viewport renderer)
-    // For now, we'll create a simple solid color buffer
-    for y in 0..height {
-        for x in 0..width {
-            let index = (y * width + x) as usize;
-            buffer[index] = RGBA8::WHITE;
-        }
+    // Use viewport renderer to render the document
+    // The renderer handles layer compositing, blend modes, and adjustments
+    let viewport = Rect::new(0, 0, width, height);
+    let render_result = renderer.render_viewport(document, viewport, &mut buffer);
+
+    if let Err(e) = render_result {
+        return Err(DocumentError::RuntimeError(format!("Rendering failed: {}", e)));
     }
 
     // Convert to image buffer
@@ -115,7 +137,7 @@ pub fn export_document(
             .flat_map(|rgba| [rgba.r, rgba.g, rgba.b, rgba.a])
             .collect(),
     ).ok_or_else(|| DocumentError::InvalidParameter(
-        "Failed to create image buffer".to_string(),
+        "Failed to create image buffer from rendered data".to_string(),
     ))?;
 
     let dynamic_image = DynamicImage::ImageRgba8(image_buffer);
@@ -127,29 +149,38 @@ pub fn export_document(
         dynamic_image
     };
 
+    // Ensure parent directory exists
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| DocumentError::RuntimeError(format!("Failed to create directory: {}", e)))?;
+    }
+
     // Save based on format
     match params.format {
         ExportFormat::Png => {
             dynamic_image.save(path)
-                .map_err(|e| DocumentError::RuntimeError(e.to_string()))?;
+                .map_err(|e| DocumentError::RuntimeError(format!("Failed to save PNG: {}", e)))?;
         }
         ExportFormat::Jpeg => {
             let quality = params.quality.unwrap_or(ExportQuality::medium());
+            let file = std::fs::File::create(path)
+                .map_err(|e| DocumentError::RuntimeError(format!("Failed to create file: {}", e)))?;
             let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(
-                std::fs::File::create(path)
-                    .map_err(|e| DocumentError::RuntimeError(e.to_string()))?,
+                file,
                 (quality.value * 100.0) as u8,
             );
             dynamic_image.write_with_encoder(encoder)
-                .map_err(|e| DocumentError::RuntimeError(e.to_string()))?;
+                .map_err(|e| DocumentError::RuntimeError(format!("Failed to encode JPEG: {}", e)))?;
         }
         ExportFormat::WebP => {
             let quality = params.quality.unwrap_or(ExportQuality::medium());
+            let file = std::fs::File::create(path)
+                .map_err(|e| DocumentError::RuntimeError(format!("Failed to create file: {}", e)))?;
             let encoder = image::codecs::webp::WebPEncoder::new_with_quality(
                 (quality.value * 100.0) as f32,
             );
             dynamic_image.write_with_encoder(encoder)
-                .map_err(|e| DocumentError::RuntimeError(e.to_string()))?;
+                .map_err(|e| DocumentError::RuntimeError(format!("Failed to encode WebP: {}", e)))?;
         }
     }
 
@@ -257,7 +288,7 @@ mod tests {
         );
 
         let tile_storage = TileStorage::new(100, 100, 64).unwrap();
-        let renderer = ViewportRenderer::new();
+        let renderer = ViewportRenderer::new(tile_storage.clone());
 
         let temp_dir = TempDir::new().unwrap();
         let path = temp_dir.path().join("test.png");
@@ -276,7 +307,7 @@ mod tests {
         );
 
         let tile_storage = TileStorage::new(100, 100, 64).unwrap();
-        let renderer = ViewportRenderer::new();
+        let renderer = ViewportRenderer::new(tile_storage.clone());
 
         let temp_dir = TempDir::new().unwrap();
         let path = temp_dir.path().join("test.jpg");
@@ -295,7 +326,7 @@ mod tests {
         );
 
         let tile_storage = TileStorage::new(100, 100, 64).unwrap();
-        let renderer = ViewportRenderer::new();
+        let renderer = ViewportRenderer::new(tile_storage.clone());
 
         let temp_dir = TempDir::new().unwrap();
         let path = temp_dir.path().join("test.webp");
@@ -314,7 +345,7 @@ mod tests {
         );
 
         let tile_storage = TileStorage::new(100, 100, 64).unwrap();
-        let renderer = ViewportRenderer::new();
+        let renderer = ViewportRenderer::new(tile_storage.clone());
 
         let temp_dir = TempDir::new().unwrap();
         let path = temp_dir.path().join("test.png");

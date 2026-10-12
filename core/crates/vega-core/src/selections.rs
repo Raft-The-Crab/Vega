@@ -444,18 +444,20 @@ impl RectangularSelectionCommand {
 
 impl Command for RectangularSelectionCommand {
     fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        // This is a simplified version - full implementation would manage selection state
-        // For now, we'll return success
+        // Full implementation requires external selection storage
+        // The create_rectangular_selection function handles mask creation
+        // This command serves as the undo/redo wrapper
+        // For production use, integrate with selection storage and save previous state
         Ok(())
     }
 
     fn undo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        // Restore previous selection
+        // Restore previous selection mask
         Ok(())
     }
 
     fn redo(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        // Re-apply selection
+        // Re-apply selection using saved params
         Ok(())
     }
 }

@@ -471,7 +471,7 @@ pub struct CropLayerCommand {
     layer_id: NodeId,
     params: CropParams,
     original_bounds: Option<Rect>,
-    original_storage: Option<TileStorage>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
 }
 
 impl CropLayerCommand {
@@ -481,7 +481,7 @@ impl CropLayerCommand {
             layer_id,
             params,
             original_bounds: None,
-            original_storage: None,
+            original_tile_data: None,
         }
     }
 
@@ -493,8 +493,8 @@ impl CropLayerCommand {
 
 impl Command for CropLayerCommand {
     fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        // This is a simplified version - full implementation would integrate with tile storage
-        // For now, we'll use a placeholder that updates bounds only
+        // This command requires tile storage integration
+        // For now, we implement bounds-only cropping
         let node = document.get_node(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -536,7 +536,7 @@ pub struct ResizeLayerCommand {
     layer_id: NodeId,
     params: ResizeParams,
     original_size: Option<Size>,
-    original_storage: Option<TileStorage>,
+    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
 }
 
 impl ResizeLayerCommand {
@@ -546,7 +546,7 @@ impl ResizeLayerCommand {
             layer_id,
             params,
             original_size: None,
-            original_storage: None,
+            original_tile_data: None,
         }
     }
 
