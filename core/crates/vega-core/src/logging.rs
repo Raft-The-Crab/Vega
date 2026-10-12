@@ -32,7 +32,6 @@ pub fn log_document_creation(document_id: u64, name: &str, size: (u32, u32)) {
 }
 
 /// Logs command execution with instrumentation.
-#[instrument(skip(document))]
 pub fn log_command_execution(command_id: u64, command_name: &str, document_id: u64) {
     info!(
         command_id,
@@ -55,7 +54,6 @@ pub fn log_tile_allocation(tile_index: u64, coords: (u32, u32), size: u32) {
 }
 
 /// Logs rendering operation with instrumentation.
-#[instrument(skip(document))]
 pub fn log_render_operation(document_id: u64, viewport: (u32, u32, u32, u32)) {
     info!(
         document_id,

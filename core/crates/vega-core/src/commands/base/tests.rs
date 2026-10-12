@@ -2,7 +2,7 @@
 mod tests {
     use super::*;
     use crate::color::ColorSpace;
-    use crate::document::ids::NodeId;
+    use crate::document::ids::structure::NodeId;
     use crate::document::nodes::{Node, NodeProperties, NodeType};
     use crate::document::Document;
     use crate::geometry::{Rect, Size};

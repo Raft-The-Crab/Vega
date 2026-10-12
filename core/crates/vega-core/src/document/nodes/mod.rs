@@ -1,7 +1,7 @@
 //! Node types for the document graph.
 
 use crate::color::ColorSpace;
-use crate::document::ids::NodeId;
+use crate::document::ids::structure::NodeId;
 use crate::geometry::{Point, Rect, Size};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

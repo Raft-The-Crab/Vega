@@ -4,7 +4,7 @@
 //! on documents. All modifications to documents should go through commands
 //! to ensure proper history tracking and undo/redo support.
 
-use crate::document::ids::CommandId;
+use crate::document::ids::structure::CommandId;
 use crate::document::Document;
 use crate::errors::{DocumentError, Result};
 use crate::tiles::TileStorage;

@@ -3,8 +3,7 @@
 //! Provides layer mask functionality for controlling layer visibility on a per-pixel basis.
 
 use crate::color::types::rgba::RGBA8;
-use crate::document::ids::structure::NodeId;
-use crate::document::ids::CommandId;
+use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};

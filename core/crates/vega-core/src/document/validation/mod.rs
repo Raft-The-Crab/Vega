@@ -1,6 +1,6 @@
 //! Document validation and invariants.
 
-use crate::document::ids::NodeId;
+use crate::document::ids::structure::NodeId;
 use crate::document::nodes::Node;
 use crate::document::Document;
 use crate::errors::{DocumentError, Result};

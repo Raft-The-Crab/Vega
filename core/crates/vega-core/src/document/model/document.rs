@@ -4,7 +4,7 @@
 //! metadata tracking, and revision tracking for change detection.
 
 use crate::color::ColorSpace;
-use crate::document::ids::{DocumentId, NodeId};
+use crate::document::ids::structure::{DocumentId, NodeId};
 use crate::document::nodes::Node;
 use crate::document::revision::{Revision, RevisionCounter};
 use crate::errors::{DocumentError, Result};

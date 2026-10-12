@@ -3,13 +3,12 @@
 //! Provides painting tools for raster editing with full pixel-level processing.
 
 use crate::color::types::rgba::RGBA8;
-use crate::document::ids::structure::NodeId;
+use crate::document::ids::structure::{NodeId, CommandId};
 use crate::document::model::document::Document;
 use crate::document::nodes::{Node, NodeType};
 use crate::geometry::{Point, Rect, Size};
 use crate::errors::DocumentError;
 use crate::commands::base::{Command, CommandContext};
-use crate::document::ids::CommandId;
 use crate::tiles::{TileStorage, TileCoords, TileHandle};
 
 /// Brush tool parameters.
