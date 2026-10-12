@@ -467,11 +467,13 @@ pub fn flip_layer_vertical(
 }
 
 /// Command for cropping a layer.
+///
+/// This command implements bounds-based cropping. Full pixel-level cropping
+/// with tile storage requires external TileStorage integration.
 pub struct CropLayerCommand {
     layer_id: NodeId,
     params: CropParams,
     original_bounds: Option<Rect>,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
 }
 
 impl CropLayerCommand {
@@ -481,7 +483,6 @@ impl CropLayerCommand {
             layer_id,
             params,
             original_bounds: None,
-            original_tile_data: None,
         }
     }
 
@@ -493,8 +494,6 @@ impl CropLayerCommand {
 
 impl Command for CropLayerCommand {
     fn execute(&mut self, document: &mut Document) -> Result<(), DocumentError> {
-        // This command requires tile storage integration
-        // For now, we implement bounds-only cropping
         let node = document.get_node(self.layer_id)
             .ok_or_else(|| DocumentError::NodeNotFound(self.layer_id))?;
 
@@ -532,11 +531,13 @@ impl Command for CropLayerCommand {
 }
 
 /// Command for resizing a layer.
+///
+/// This command implements bounds-based resizing. Full pixel-level resampling
+/// with tile storage requires external TileStorage integration.
 pub struct ResizeLayerCommand {
     layer_id: NodeId,
     params: ResizeParams,
     original_size: Option<Size>,
-    original_tile_data: Option<Vec<(TileCoords, Vec<RGBA8>)>>,
 }
 
 impl ResizeLayerCommand {
@@ -546,7 +547,6 @@ impl ResizeLayerCommand {
             layer_id,
             params,
             original_size: None,
-            original_tile_data: None,
         }
     }
 
